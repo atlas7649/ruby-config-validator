@@ -36,4 +36,43 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be true
     expect(result[:data]['debug']).to eq(false)
   end
+
+  it 'validates nested configurations' do
+    db_schema = ConfigValidator::Schema.new do
+      field :user, String
+      field :pass, String
+    end
+
+    complex_schema = ConfigValidator::Schema.new do
+      field :app_name, String
+      field :database, ConfigValidator::Schema, schema: db_schema
+    end
+
+    config = {
+      'app_name' => 'MyApp',
+      'database' => { 'user' => 'admin', 'pass' => 'secret' }
+    }
+    result = ConfigValidator.validate(config, complex_schema)
+    expect(result[:valid]).to be true
+  end
+
+  it 'detects errors in nested configurations' do
+    db_schema = ConfigValidator::Schema.new do
+      field :user, String
+      field :pass, String
+    end
+
+    complex_schema = ConfigValidator::Schema.new do
+      field :app_name, String
+      field :database, ConfigValidator::Schema, schema: db_schema
+    end
+
+    config = {
+      'app_name' => 'MyApp',
+      'database' => { 'user' => 'admin' } # missing pass
+    }
+    result = ConfigValidator.validate(config, complex_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors]).to include('database.Missing required field: pass')
+  end
 end
