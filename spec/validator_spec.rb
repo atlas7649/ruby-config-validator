@@ -6,7 +6,7 @@ RSpec.describe ConfigValidator do
     ConfigValidator::Schema.new do
       field :port, Integer
       field :host, String
-      field :debug, TrueClass, required: false
+      field :debug, TrueClass, required: false, default: false
     end
   end
 
@@ -28,5 +28,12 @@ RSpec.describe ConfigValidator do
     result = ConfigValidator.validate(config, schema)
     expect(result[:valid]).to be false
     expect(result[:errors].first).to be_a(ConfigValidator::ValidationError)
+  end
+
+  it 'applies default values for missing optional fields' do
+    config = { 'port' => 8080, 'host' => 'localhost' }
+    result = ConfigValidator.validate(config, schema)
+    expect(result[:valid]).to be true
+    expect(result[:data]['debug']).to eq(false)
   end
 end
