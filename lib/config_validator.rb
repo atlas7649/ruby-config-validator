@@ -25,9 +25,6 @@ module ConfigValidator
 
       if rules[:type] == ConfigValidator::Schema
         if value.is_a?(Hash)
-          # Recursively validate nested schema
-          # We need to find the specific schema instance associated with this field
-          # Since the 'type' is just the class, we check if there's a specific schema provided
           nested_schema = rules[:schema] || ConfigValidator::Schema.new {}
           nested_result = validate(value, nested_schema)
           
@@ -38,8 +35,24 @@ module ConfigValidator
         else
           errors << ValidationError.new(name, 'Hash (Nested Schema)', value)
         end
+      elsif rules[:type] == Array
+        if !value.is_a?(Array)
+          errors << ValidationError.new(name, 'Array', value)
+        elsif rules[:element_type]
+          value.each_with_index do |item, idx|
+            unless item.is_a?(rules[:element_type])
+              errors << ValidationError.new("#{name}[#{idx}]", rules[:element_type], item)
+            end
+          end
+        end
       elsif !value.is_a?(rules[:type])
         errors << ValidationError.new(name, rules[:type], value)
+      end
+
+      if rules[:validate] && !errors.any? { |e| e.is_a?(ValidationError) && e.path == name }
+        unless rules[:validate].call(value)
+          errors << "Validation failed for field: #{name}"
+        end
       end
     end
 

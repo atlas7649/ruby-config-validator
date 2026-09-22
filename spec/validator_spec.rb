@@ -75,4 +75,34 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors]).to include('database.Missing required field: pass')
   end
+
+  it 'validates array types and elements' do
+    arr_schema = ConfigValidator::Schema.new do
+      field :tags, Array, element_type: String
+    end
+
+    config = { 'tags' => ['ruby', 'validation'] }
+    expect(ConfigValidator.validate(config, arr_schema)[:valid]).to be true
+
+    config_invalid = { 'tags' => ['ruby', 123] }
+    result = ConfigValidator.validate(config_invalid, arr_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('tags[1]')
+  end
+
+  it 'runs custom validation blocks' do
+    custom_schema = ConfigValidator::Schema.new do
+      field :port, Integer do |val|
+        val >= 1024 && val <= 65535
+      end
+    end
+
+    config_valid = { 'port' => 8080 }
+    expect(ConfigValidator.validate(config_valid, custom_schema)[:valid]).to be true
+
+    config_invalid = { 'port' => 80 }
+    result = ConfigValidator.validate(config_invalid, custom_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors]).to include('Validation failed for field: port')
+  end
 end
