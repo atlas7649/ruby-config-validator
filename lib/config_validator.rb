@@ -88,9 +88,15 @@ module ConfigValidator
 
       if type_error
         errors << type_error
-      elsif rules[:validate]
-        unless rules[:validate].call(value)
-          errors << ValidationError.new(name, 'Custom Validation', value)
+      else
+        if rules[:allowed_values] && !rules[:allowed_values].include?(value)
+          errors << ValidationError.new(name, "One of #{rules[:allowed_values].inspect}", value)
+        end
+
+        if rules[:validate]
+          unless rules[:validate].call(value)
+            errors << ValidationError.new(name, 'Custom Validation', value)
+          end
         end
       end
     end

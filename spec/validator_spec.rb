@@ -268,4 +268,17 @@ RSpec.describe ConfigValidator do
     }
     expect(ConfigValidator.validate(config, cluster_schema)[:valid]).to be true
   end
+
+  it 'validates allowed values' do
+    env_schema = ConfigValidator::Schema.new do
+      field :environment, String, allowed_values: ['development', 'staging', 'production']
+    end
+
+    expect(ConfigValidator.validate({ 'environment' => 'production' }, env_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'environment' => 'test' }, env_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('environment')
+    expect(result[:errors].first.expected).to include('development', 'staging', 'production')
+  end
 end
