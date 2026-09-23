@@ -225,4 +225,28 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.path).to eq('tags[1]')
   end
+
+  it 'validates float types' do
+    float_schema = ConfigValidator::Schema.new do
+      field :threshold, Float
+    end
+
+    expect(ConfigValidator.validate({ 'threshold' => 0.5 }, float_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'threshold' => '0.5' }, float_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq(Float)
+  end
+
+  it 'validates arrays of floats' do
+    float_arr_schema = ConfigValidator::Schema.new do
+      field :weights, Array, element_type: Float
+    end
+
+    expect(ConfigValidator.validate({ 'weights' => [0.1, 0.2, 0.7] }, float_arr_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'weights' => [0.1, '0.2'] }, float_arr_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('weights[1]')
+  end
 end
