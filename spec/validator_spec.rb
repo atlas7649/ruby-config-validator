@@ -207,4 +207,20 @@ RSpec.describe ConfigValidator do
     config = {}
     expect(ConfigValidator.validate(config, opt_arr_schema)[:valid]).to be true
   end
+
+  it 'handles optional array elements' do
+    opt_elem_schema = ConfigValidator::Schema.new do
+      field :tags, Array, element_type: String, element_optional: true
+    end
+
+    config = { 'tags' => ['ruby', nil, 'validation'] }
+    expect(ConfigValidator.validate(config, opt_elem_schema)[:valid]).to be true
+
+    strict_elem_schema = ConfigValidator::Schema.new do
+      field :tags, Array, element_type: String, element_optional: false
+    end
+    result = ConfigValidator.validate(config, strict_elem_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('tags[1]')
+  end
 end

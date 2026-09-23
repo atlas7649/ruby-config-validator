@@ -52,6 +52,13 @@ module ConfigValidator
           errors << ValidationError.new(name, 'Array', value)
         elsif rules[:element_type]
           value.each_with_index do |item, idx|
+            if item.nil?
+              unless rules[:element_optional]
+                errors << ValidationError.new("#{name}[#{idx}]", rules[:element_type], item)
+              end
+              next
+            end
+
             if rules[:element_type] == ConfigValidator::Schema
               nested_schema = rules[:schema] || ConfigValidator::Schema.new {}
               nested_result = validate(item, nested_schema, strict: strict)
