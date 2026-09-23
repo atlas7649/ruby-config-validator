@@ -93,6 +93,15 @@ module ConfigValidator
           errors << ValidationError.new(name, "One of #{rules[:allowed_values].inspect}", value)
         end
 
+        if (rules[:min] || rules[:max]) && value.is_a?(Numeric)
+          if rules[:min] && value < rules[:min]
+            errors << ValidationError.new(name, "Minimum #{rules[:min]}", value)
+          end
+          if rules[:max] && value > rules[:max]
+            errors << ValidationError.new(name, "Maximum #{rules[:max]}", value)
+          end
+        end
+
         if rules[:validate]
           unless rules[:validate].call(value)
             errors << ValidationError.new(name, 'Custom Validation', value)

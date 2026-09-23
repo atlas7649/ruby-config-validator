@@ -281,4 +281,21 @@ RSpec.describe ConfigValidator do
     expect(result[:errors].first.path).to eq('environment')
     expect(result[:errors].first.expected).to include('development', 'staging', 'production')
   end
+
+  it 'validates numeric ranges' do
+    range_schema = ConfigValidator::Schema.new do
+      field :port, Integer, min: 1024, max: 65535
+      field :ratio, Float, min: 0.0, max: 1.0
+    end
+
+    expect(ConfigValidator.validate({ 'port' => 8080, 'ratio' => 0.5 }, range_schema)[:valid]).to be true
+
+    result_low = ConfigValidator.validate({ 'port' => 80, 'ratio' => 0.5 }, range_schema)
+    expect(result_low[:valid]).to be false
+    expect(result_low[:errors].first.expected).to eq('Minimum 1024')
+
+    result_high = ConfigValidator.validate({ 'port' => 8080, 'ratio' => 1.1 }, range_schema)
+    expect(result_high[:valid]).to be false
+    expect(result_high[:errors].first.expected).to eq('Maximum 1.0')
+  end
 end
