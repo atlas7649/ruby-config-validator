@@ -4,9 +4,16 @@ require_relative 'config_validator/errors'
 require_relative 'config_validator/schema'
 
 module ConfigValidator
-  def self.validate(config_data, schema)
+  def self.validate(config_data, schema, strict: false)
     errors = []
     validated_data = config_data ? config_data.dup : {}
+
+    if strict && config_data.is_a?(Hash)
+      unknown_keys = config_data.keys - schema.definitions.keys
+      unknown_keys.each do |key|
+        errors << "Unexpected configuration key: #{key}"
+      end
+    end
 
     schema.definitions.each do |name, rules|
       value = validated_data[name]
@@ -26,7 +33,7 @@ module ConfigValidator
       if rules[:type] == ConfigValidator::Schema
         if value.is_a?(Hash)
           nested_schema = rules[:schema] || ConfigValidator::Schema.new {}
-          nested_result = validate(value, nested_schema)
+          nested_result = validate(value, nested_schema, strict: strict)
           
           unless nested_result[:valid]
             errors.concat(nested_result[:errors].map { |e| "#{name}.#{e}" })
@@ -45,7 +52,7 @@ module ConfigValidator
           value.each_with_index do |item, idx|
             if rules[:element_type] == ConfigValidator::Schema
               nested_schema = rules[:schema] || ConfigValidator::Schema.new {}
-              nested_result = validate(item, nested_schema)
+              nested_result = validate(item, nested_schema, strict: strict)
               unless nested_result[:valid]
                 errors.concat(nested_result[:errors].map { |e| "#{name}[#{idx}].#{e}" })
               end
@@ -69,13 +76,13 @@ module ConfigValidator
     { valid: errors.empty?, errors: errors, data: validated_data }
   end
 
-  def self.load_and_validate(file_path, schema)
+  def self.load_and_validate(file_path, schema, strict: false)
     ext = File.extname(file_path).downcase
     data = case ext
            when '.yaml', '.yml' then YAML.load_file(file_path)
            when '.json' then JSON.parse(File.read(file_path))
            else raise "Unsupported file format: #{ext}"
            end
-    validate(data, schema)
+    validate(data, schema, strict: strict)
   end
 end

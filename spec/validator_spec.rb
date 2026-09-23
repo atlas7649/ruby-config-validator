@@ -149,4 +149,28 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors]).to include('nodes[1].Missing required field: role')
   end
+
+  it 'detects unexpected keys in strict mode' do
+    config = { 'port' => 8080, 'host' => 'localhost', 'unknown_key' => 'value' }
+    result = ConfigValidator.validate(config, schema, strict: true)
+    expect(result[:valid]).to be false
+    expect(result[:errors]).to include('Unexpected configuration key: unknown_key')
+  end
+
+  it 'detects unexpected keys in nested schemas in strict mode' do
+    db_schema = ConfigValidator::Schema.new do
+      field :user, String
+    end
+
+    complex_schema = ConfigValidator::Schema.new do
+      field :database, ConfigValidator::Schema, schema: db_schema
+    end
+
+    config = {
+      'database' => { 'user' => 'admin', 'extra' => 'something' }
+    }
+    result = ConfigValidator.validate(config, complex_schema, strict: true)
+    expect(result[:valid]).to be false
+    expect(result[:errors]).to include('database.Unexpected configuration key: extra')
+  end
 end
