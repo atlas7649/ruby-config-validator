@@ -33,7 +33,7 @@ module ConfigValidator
           end
           validated_data[name] = nested_result[:data]
         elsif value.nil?
-          # This case is handled by the value.nil? check above, but for clarity:
+          # This case is handled by the value.nil? check above, for clarity:
           next
         else
           errors << ValidationError.new(name, 'Hash (Nested Schema)', value)
@@ -43,7 +43,14 @@ module ConfigValidator
           errors << ValidationError.new(name, 'Array', value)
         elsif rules[:element_type]
           value.each_with_index do |item, idx|
-            unless item.is_a?(rules[:element_type])
+            if rules[:element_type] == ConfigValidator::Schema
+              nested_schema = rules[:schema] || ConfigValidator::Schema.new {}
+              nested_result = validate(item, nested_schema)
+              unless nested_result[:valid]
+                errors.concat(nested_result[:errors].map { |e| "#{name}[#{idx}].#{e}" })
+              end
+              value[idx] = nested_result[:data]
+            elsif !item.is_a?(rules[:element_type])
               errors << ValidationError.new("#{name}[#{idx}]", rules[:element_type], item)
             end
           end

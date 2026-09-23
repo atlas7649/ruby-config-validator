@@ -120,4 +120,33 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors]).to include('Validation failed for field: port')
   end
+
+  it 'validates arrays of nested schemas' do
+    node_schema = ConfigValidator::Schema.new do
+      field :ip, String
+      field :role, String
+    end
+
+    cluster_schema = ConfigValidator::Schema.new do
+      field :nodes, Array, element_type: ConfigValidator::Schema, schema: node_schema
+    end
+
+    config = {
+      'nodes' => [
+        { 'ip' => '10.0.0.1', 'role' => 'master' },
+        { 'ip' => '10.0.0.2', 'role' => 'worker' }
+      ]
+    }
+    expect(ConfigValidator.validate(config, cluster_schema)[:valid]).to be true
+
+    config_invalid = {
+      'nodes' => [
+        { 'ip' => '10.0.0.1', 'role' => 'master' },
+        { 'ip' => '10.0.0.2' } # missing role
+      ]
+    }
+    result = ConfigValidator.validate(config_invalid, cluster_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors]).to include('nodes[1].Missing required field: role')
+  end
 end
