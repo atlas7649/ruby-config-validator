@@ -13,7 +13,7 @@ module ConfigValidator
     if strict && config_data.is_a?(Hash)
       unknown_keys = config_data.keys - schema.definitions.keys
       unknown_keys.each do |key|
-        errors << "Unexpected configuration key: #{key}"
+        errors << ValidationError.new(key, 'Known Key', key)
       end
     end
 
@@ -22,7 +22,7 @@ module ConfigValidator
 
       if value.nil?
         if rules[:default].nil? && rules[:required]
-          errors << "Missing required field: #{name}"
+          errors << ValidationError.new(name, 'Required', 'nil')
           next
         elsif rules[:default].nil?
           next
@@ -32,24 +32,25 @@ module ConfigValidator
         end
       end
 
+      type_error = nil
+
       if rules[:type] == ConfigValidator::Schema
         if value.is_a?(Hash)
           nested_schema = rules[:schema] || ConfigValidator::Schema.new {}
           nested_result = validate(value, nested_schema, strict: strict)
           
           unless nested_result[:valid]
-            errors.concat(nested_result[:errors].map { |e| "#{name}.#{e}" })
+            errors.concat(nested_result[:errors].map do |e|
+              e.is_a?(ValidationError) ? ValidationError.new("#{name}.#{e.path}", e.expected, e.actual) : ValidationError.new(name, 'Valid Nested Schema', e)
+            end)
           end
           validated_data[name] = nested_result[:data]
-        elsif value.nil?
-          # This case is handled by the value.nil? check above, for clarity:
-          next
         else
-          errors << ValidationError.new(name, 'Hash (Nested Schema)', value)
+          type_error = ValidationError.new(name, 'Hash (Nested Schema)', value)
         end
       elsif rules[:type] == Array
         if !value.is_a?(Array)
-          errors << ValidationError.new(name, 'Array', value)
+          type_error = ValidationError.new(name, 'Array', value)
         elsif rules[:element_type]
           value.each_with_index do |item, idx|
             if item.nil?
@@ -63,7 +64,9 @@ module ConfigValidator
               nested_schema = rules[:schema] || ConfigValidator::Schema.new {}
               nested_result = validate(item, nested_schema, strict: strict)
               unless nested_result[:valid]
-                errors.concat(nested_result[:errors].map { |e| "#{name}[#{idx}].#{e}" })
+                errors.concat(nested_result[:errors].map do |e|
+                  e.is_a?(ValidationError) ? ValidationError.new("#{name}[#{idx}].#{e.path}", e.expected, e.actual) : ValidationError.new("#{name}[#{idx}]", 'Valid Nested Schema', e)
+                end)
               end
               value[idx] = nested_result[:data]
             elsif rules[:element_type] == :boolean
@@ -77,15 +80,17 @@ module ConfigValidator
         end
       elsif rules[:type] == :boolean
         unless BOOLEAN_TYPES.any? { |t| value.is_a?(t) }
-          errors << ValidationError.new(name, 'Boolean', value)
+          type_error = ValidationError.new(name, 'Boolean', value)
         end
       elsif !value.is_a?(rules[:type])
-        errors << ValidationError.new(name, rules[:type], value)
+        type_error = ValidationError.new(name, rules[:type], value)
       end
 
-      if rules[:validate] && !errors.any? { |e| e.is_a?(ValidationError) && e.path == name }
+      if type_error
+        errors << type_error
+      elsif rules[:validate]
         unless rules[:validate].call(value)
-          errors << "Validation failed for field: #{name}"
+          errors << ValidationError.new(name, 'Custom Validation', value)
         end
       end
     end

@@ -20,7 +20,8 @@ RSpec.describe ConfigValidator do
     config = { 'port' => 8080 }
     result = ConfigValidator.validate(config, schema)
     expect(result[:valid]).to be false
-    expect(result[:errors]).to include('Missing required field: host')
+    expect(result[:errors].first).to be_a(ConfigValidator::ValidationError)
+    expect(result[:errors].first.path).to eq('host')
   end
 
   it 'detects type mismatches' do
@@ -73,7 +74,7 @@ RSpec.describe ConfigValidator do
     }
     result = ConfigValidator.validate(config, complex_schema)
     expect(result[:valid]).to be false
-    expect(result[:errors]).to include('database.Missing required field: pass')
+    expect(result[:errors].first.path).to eq('database.pass')
   end
 
   it 'handles optional nested configurations' do
@@ -118,7 +119,7 @@ RSpec.describe ConfigValidator do
     config_invalid = { 'port' => 80 }
     result = ConfigValidator.validate(config_invalid, custom_schema)
     expect(result[:valid]).to be false
-    expect(result[:errors]).to include('Validation failed for field: port')
+    expect(result[:errors].first).to be_a(ConfigValidator::ValidationError)
   end
 
   it 'validates arrays of nested schemas' do
@@ -147,14 +148,15 @@ RSpec.describe ConfigValidator do
     }
     result = ConfigValidator.validate(config_invalid, cluster_schema)
     expect(result[:valid]).to be false
-    expect(result[:errors]).to include('nodes[1].Missing required field: role')
+    expect(result[:errors].first.path).to eq('nodes[1].role')
   end
 
   it 'detects unexpected keys in strict mode' do
     config = { 'port' => 8080, 'host' => 'localhost', 'unknown_key' => 'value' }
     result = ConfigValidator.validate(config, schema, strict: true)
     expect(result[:valid]).to be false
-    expect(result[:errors]).to include('Unexpected configuration key: unknown_key')
+    expect(result[:errors].first).to be_a(ConfigValidator::ValidationError)
+    expect(result[:errors].first.path).to eq('unknown_key')
   end
 
   it 'detects unexpected keys in nested schemas in strict mode' do
@@ -171,7 +173,7 @@ RSpec.describe ConfigValidator do
     }
     result = ConfigValidator.validate(config, complex_schema, strict: true)
     expect(result[:valid]).to be false
-    expect(result[:errors]).to include('database.Unexpected configuration key: extra')
+    expect(result[:errors].first.path).to eq('database.extra')
   end
 
   it 'validates boolean types' do
