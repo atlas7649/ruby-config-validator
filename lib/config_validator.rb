@@ -4,6 +4,8 @@ require_relative 'config_validator/errors'
 require_relative 'config_validator/schema'
 
 module ConfigValidator
+  BOOLEAN_TYPES = [TrueClass, FalseClass].freeze
+
   def self.validate(config_data, schema, strict: false)
     errors = []
     validated_data = config_data ? config_data.dup : {}
@@ -57,10 +59,18 @@ module ConfigValidator
                 errors.concat(nested_result[:errors].map { |e| "#{name}[#{idx}].#{e}" })
               end
               value[idx] = nested_result[:data]
+            elsif rules[:element_type] == :boolean
+              unless BOOLEAN_TYPES.any? { |t| item.is_a?(t) }
+                errors << ValidationError.new("#{name}[#{idx}]", 'Boolean', item)
+              end
             elsif !item.is_a?(rules[:element_type])
               errors << ValidationError.new("#{name}[#{idx}]", rules[:element_type], item)
             end
           end
+        end
+      elsif rules[:type] == :boolean
+        unless BOOLEAN_TYPES.any? { |t| value.is_a?(t) }
+          errors << ValidationError.new(name, 'Boolean', value)
         end
       elsif !value.is_a?(rules[:type])
         errors << ValidationError.new(name, rules[:type], value)

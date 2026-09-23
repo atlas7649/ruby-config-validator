@@ -6,7 +6,7 @@ RSpec.describe ConfigValidator do
     ConfigValidator::Schema.new do
       field :port, Integer
       field :host, String
-      field :debug, TrueClass, required: false, default: false
+      field :debug, :boolean, required: false, default: false
     end
   end
 
@@ -172,5 +172,30 @@ RSpec.describe ConfigValidator do
     result = ConfigValidator.validate(config, complex_schema, strict: true)
     expect(result[:valid]).to be false
     expect(result[:errors]).to include('database.Unexpected configuration key: extra')
+  end
+
+  it 'validates boolean types' do
+    bool_schema = ConfigValidator::Schema.new do
+      field :enabled, :boolean
+    end
+
+    expect(ConfigValidator.validate({ 'enabled' => true }, bool_schema)[:valid]).to be true
+    expect(ConfigValidator.validate({ 'enabled' => false }, bool_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'enabled' => 'true' }, bool_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('Boolean')
+  end
+
+  it 'validates arrays of booleans' do
+    bool_arr_schema = ConfigValidator::Schema.new do
+      field :flags, Array, element_type: :boolean
+    end
+
+    expect(ConfigValidator.validate({ 'flags' => [true, false, true] }, bool_arr_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'flags' => [true, 1] }, bool_arr_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('flags[1]')
   end
 end
