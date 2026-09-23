@@ -249,4 +249,23 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.path).to eq('weights[1]')
   end
+
+  it 'handles optional array elements for nested schemas' do
+    node_schema = ConfigValidator::Schema.new do
+      field :ip, String
+    end
+
+    cluster_schema = ConfigValidator::Schema.new do
+      field :nodes, Array, element_type: ConfigValidator::Schema, schema: node_schema, element_optional: true
+    end
+
+    config = {
+      'nodes' => [
+        { 'ip' => '10.0.0.1' },
+        nil,
+        { 'ip' => '10.0.0.2' }
+      ]
+    }
+    expect(ConfigValidator.validate(config, cluster_schema)[:valid]).to be true
+  end
 end
