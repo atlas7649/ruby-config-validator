@@ -32,6 +32,9 @@ module ConfigValidator
             errors.concat(nested_result[:errors].map { |e| "#{name}.#{e}" })
           end
           validated_data[name] = nested_result[:data]
+        elsif value.nil?
+          # This case is handled by the value.nil? check above, but for clarity:
+          next
         else
           errors << ValidationError.new(name, 'Hash (Nested Schema)', value)
         end

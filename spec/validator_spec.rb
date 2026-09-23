@@ -76,6 +76,21 @@ RSpec.describe ConfigValidator do
     expect(result[:errors]).to include('database.Missing required field: pass')
   end
 
+  it 'handles optional nested configurations' do
+    db_schema = ConfigValidator::Schema.new do
+      field :user, String
+    end
+
+    complex_schema = ConfigValidator::Schema.new do
+      field :app_name, String
+      field :database, ConfigValidator::Schema, schema: db_schema, required: false
+    end
+
+    config = { 'app_name' => 'MyApp' }
+    result = ConfigValidator.validate(config, complex_schema)
+    expect(result[:valid]).to be true
+  end
+
   it 'validates array types and elements' do
     arr_schema = ConfigValidator::Schema.new do
       field :tags, Array, element_type: String
