@@ -147,7 +147,7 @@ RSpec.describe ConfigValidator do
       ]
     }
     result = ConfigValidator.validate(config_invalid, cluster_schema)
-    expect(result[:valid]).to be false
+    expect(result[:valid]). to be false
     expect(result[:errors].first.path).to eq('nodes[1].role')
   end
 
@@ -314,5 +314,22 @@ RSpec.describe ConfigValidator do
     result_version = ConfigValidator.validate({ 'email' => 'test@example.com', 'version' => '1.0' }, pattern_schema)
     expect(result_version[:valid]).to be false
     expect(result_version[:errors].first.path).to eq('version')
+  end
+
+  it 'validates array lengths' do
+    len_schema = ConfigValidator::Schema.new do
+      field :servers, Array, min_length: 1, max_length: 3
+    end
+
+    expect(ConfigValidator.validate({ 'servers' => ['s1'] }, len_schema)[:valid]).to be true
+    expect(ConfigValidator.validate({ 'servers' => ['s1', 's2', 's3'] }, len_schema)[:valid]).to be true
+
+    result_too_short = ConfigValidator.validate({ 'servers' => [] }, len_schema)
+    expect(result_too_short[:valid]).to be false
+    expect(result_too_short[:errors].first.expected).to eq('Minimum length 1')
+
+    result_too_long = ConfigValidator.validate({ 'servers' => ['s1', 's2', 's3', 's4'] }, len_schema)
+    expect(result_too_long[:valid]).to be false
+    expect(result_too_long[:errors].first.expected).to eq('Maximum length 3')
   end
 end
