@@ -117,9 +117,17 @@ module ConfigValidator
           end
         end
 
+        if rules[:non_empty] && value.is_a?(String)
+          if value.strip.empty?
+            errors << ValidationError.new(name, 'Non-empty string', value)
+          end
+        end
+
         if rules[:validate]
-          unless rules[:validate].call(value)
-            errors << ValidationError.new(name, 'Custom Validation', value)
+          validation_result = rules[:validate].call(value)
+          unless validation_result
+            msg = validation_result.is_a?(String) ? validation_result : 'Custom Validation'
+            errors << ValidationError.new(name, msg, value)
           end
         end
       end

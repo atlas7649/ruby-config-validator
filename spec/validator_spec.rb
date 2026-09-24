@@ -332,4 +332,32 @@ RSpec.describe ConfigValidator do
     expect(result_too_long[:valid]).to be false
     expect(result_too_long[:errors].first.expected).to eq('Maximum length 3')
   end
+
+  it 'validates non-empty strings' do
+    non_empty_schema = ConfigValidator::Schema.new do
+      field :api_token, String, non_empty: true
+    end
+
+    expect(ConfigValidator.validate({ 'api_token' => 'xyz123' }, non_empty_schema)[:valid]).to be true
+    
+    result_empty = ConfigValidator.validate({ 'api_token' => '' }, non_empty_schema)
+    expect(result_empty[:valid]).to be false
+    expect(result_empty[:errors].first.expected).to eq('Non-empty string')
+
+    result_blank = ConfigValidator.validate({ 'api_token' => '   ' }, non_empty_schema)
+    expect(result_blank[:valid]).to be false
+    expect(result_blank[:errors].first.expected).to eq('Non-empty string')
+  end
+
+  it 'allows custom error messages in validation blocks' do
+    custom_msg_schema = ConfigValidator::Schema.new do
+      field :port, Integer do |val|
+        val >= 1024 ? true : 'Port must be in the non-privileged range (>= 1024)'
+      end
+    end
+
+    result = ConfigValidator.validate({ 'port' => 80 }, custom_msg_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('Port must be in the non-privileged range (>= 1024)')
+  end
 end
