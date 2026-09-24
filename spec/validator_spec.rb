@@ -367,4 +367,29 @@ RSpec.describe ConfigValidator do
     end
     expect(ConfigValidator.validate({}, opt_schema)[:valid]).to be true
   end
+
+  it 'validates union types for fields' do
+    union_schema = ConfigValidator::Schema.new do
+      field :timeout, [Integer, String]
+    end
+
+    expect(ConfigValidator.validate({ 'timeout' => 30 }, union_schema)[:valid]).to be true
+    expect(ConfigValidator.validate({ 'timeout' => '30s' }, union_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'timeout' => true }, union_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to include('Integer', 'String')
+  end
+
+  it 'validates union types for array elements' do
+    union_arr_schema = ConfigValidator::Schema.new do
+      field :values, Array, element_type: [Integer, Float]
+    end
+
+    expect(ConfigValidator.validate({ 'values' => [1, 2.5, 3] }, union_arr_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'values' => [1, '2.5'] }, union_arr_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('values[1]')
+  end
 end

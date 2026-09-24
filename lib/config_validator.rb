@@ -60,7 +60,8 @@ module ConfigValidator
               next
             end
 
-            if rules[:element_type] == ConfigValidator::Schema
+            item_type = rules[:element_type]
+            if item_type == ConfigValidator::Schema
               nested_schema = rules[:schema] || ConfigValidator::Schema.new {}
               nested_result = validate(item, nested_schema, strict: strict)
               unless nested_result[:valid]
@@ -69,14 +70,22 @@ module ConfigValidator
                 end)
               end
               value[idx] = nested_result[:data]
-            elsif rules[:element_type] == :boolean
+            elsif item_type.is_a?(Array)
+              unless check_type(item, item_type)
+                errors << ValidationError.new("#{name}[#{idx}]", "One of #{item_type.inspect}", item)
+              end
+            elsif item_type == :boolean
               unless BOOLEAN_TYPES.any? { |t| item.is_a?(t) }
                 errors << ValidationError.new("#{name}[#{idx}]", 'Boolean', item)
               end
-            elsif !item.is_a?(rules[:element_type])
-              errors << ValidationError.new("#{name}[#{idx}]", rules[:element_type], item)
+            elsif !item.is_a?(item_type)
+              errors << ValidationError.new("#{name}[#{idx}]", item_type, item)
             end
           end
+        end
+      elsif rules[:type].is_a?(Array)
+        unless check_type(value, rules[:type])
+          type_error = ValidationError.new(name, "One of #{rules[:type].inspect}", value)
         end
       elsif rules[:type] == :boolean
         unless BOOLEAN_TYPES.any? { |t| value.is_a?(t) }
@@ -134,6 +143,16 @@ module ConfigValidator
     end
 
     { valid: errors.empty?, errors: errors, data: validated_data }
+  end
+
+  def self.check_type(value, types)
+    types.any? do |type|
+      if type == :boolean
+        BOOLEAN_TYPES.any? { |t| value.is_a?(t) }
+      else
+        value.is_a?(type)
+      end
+    end
   end
 
   def self.load_and_validate(file_path, schema, strict: false)
