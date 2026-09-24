@@ -298,4 +298,21 @@ RSpec.describe ConfigValidator do
     expect(result_high[:valid]).to be false
     expect(result_high[:errors].first.expected).to eq('Maximum 1.0')
   end
+
+  it 'validates string patterns' do
+    pattern_schema = ConfigValidator::Schema.new do
+      field :email, String, pattern: /\A[^@\s]+@[^@\s]+\z/
+      field :version, String, pattern: /\A\d+\.\d+\.\d+\z/
+    end
+
+    expect(ConfigValidator.validate({ 'email' => 'test@example.com', 'version' => '1.0.0' }, pattern_schema)[:valid]).to be true
+
+    result_email = ConfigValidator.validate({ 'email' => 'invalid-email', 'version' => '1.0.0' }, pattern_schema)
+    expect(result_email[:valid]).to be false
+    expect(result_email[:errors].first.path).to eq('email')
+
+    result_version = ConfigValidator.validate({ 'email' => 'test@example.com', 'version' => '1.0' }, pattern_schema)
+    expect(result_version[:valid]).to be false
+    expect(result_version[:errors].first.path).to eq('version')
+  end
 end

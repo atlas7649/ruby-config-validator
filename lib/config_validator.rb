@@ -102,6 +102,12 @@ module ConfigValidator
           end
         end
 
+        if rules[:pattern] && value.is_a?(String)
+          unless value.match?(rules[:pattern])
+            errors << ValidationError.new(name, "Pattern #{rules[:pattern].inspect}", value)
+          end
+        end
+
         if rules[:validate]
           unless rules[:validate].call(value)
             errors << ValidationError.new(name, 'Custom Validation', value)
