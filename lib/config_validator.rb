@@ -6,6 +6,10 @@ require_relative 'config_validator/schema'
 module ConfigValidator
   BOOLEAN_TYPES = [TrueClass, FalseClass].freeze
 
+  def self.valid?(config_data, schema, strict: false)
+    validate(config_data, schema, strict: strict)[:valid]
+  end
+
   def self.validate(config_data, schema, strict: false)
     errors = []
     validated_data = config_data ? config_data.dup : {}

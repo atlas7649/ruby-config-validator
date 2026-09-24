@@ -392,4 +392,12 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.path).to eq('values[1]')
   end
+
+  it 'provides a valid? convenience method' do
+    config = { 'port' => 8080, 'host' => 'localhost' }
+    expect(ConfigValidator.valid?(config, schema)).to be true
+    
+    config_invalid = { 'port' => 'invalid' }
+    expect(ConfigValidator.valid?(config_invalid, schema)).to be false
+  end
 end
