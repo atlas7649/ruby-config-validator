@@ -360,4 +360,11 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.expected).to eq('Port must be in the non-privileged range (>= 1024)')
   end
+
+  it 'allows omitting optional fields without default' do
+    opt_schema = ConfigValidator::Schema.new do
+      field :optional_field, String, required: false
+    end
+    expect(ConfigValidator.validate({}, opt_schema)[:valid]).to be true
+  end
 end
