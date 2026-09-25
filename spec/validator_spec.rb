@@ -426,4 +426,17 @@ RSpec.describe ConfigValidator do
     expect(result[:errors].first.expected).to eq('Minimum elements 2')
     expect(result[:errors].first.actual).to eq(1)
   end
+
+  it 'validates element_allowed_values for arrays' do
+    allowed_elem_schema = ConfigValidator::Schema.new do
+      field :roles, Array, element_type: String, element_allowed_values: ['admin', 'user', 'guest']
+    end
+
+    expect(ConfigValidator.validate({ 'roles' => ['admin', 'user'] }, allowed_elem_schema)[:valid]).to be true
+
+    result = ConfigValidator.validate({ 'roles' => ['admin', 'superuser'] }, allowed_elem_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('roles[1]')
+    expect(result[:errors].first.expected).to include('admin', 'user', 'guest')
+  end
 end

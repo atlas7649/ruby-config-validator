@@ -85,6 +85,10 @@ module ConfigValidator
             elsif !item.is_a?(item_type)
               errors << ValidationError.new("#{name}[#{idx}]", item_type, item)
             end
+
+            if rules[:element_allowed_values] && !rules[:element_allowed_values].include?(item)
+              errors << ValidationError.new("#{name}[#{idx}]", "One of #{rules[:element_allowed_values].inspect}", item)
+            end
           end
         end
       elsif rules[:type].is_a?(Array)
