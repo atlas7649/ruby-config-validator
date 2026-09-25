@@ -124,6 +124,12 @@ module ConfigValidator
           end
         end
 
+        if rules[:max_elements] && value.is_a?(Array)
+          if value.length > rules[:max_elements]
+            errors << ValidationError.new(name, "Maximum elements #{rules[:max_elements]}", value.length)
+          end
+        end
+
         if rules[:pattern] && value.is_a?(String)
           unless value.match?(rules[:pattern])
             errors << ValidationError.new(name, "Pattern #{rules[:pattern].inspect}", value)

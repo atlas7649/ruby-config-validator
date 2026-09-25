@@ -147,7 +147,7 @@ RSpec.describe ConfigValidator do
       ]
     }
     result = ConfigValidator.validate(config_invalid, cluster_schema)
-    expect(result[:valid]). to be false
+    expect(result[:valid]).to be false
     expect(result[:errors].first.path).to eq('nodes[1].role')
   end
 
@@ -399,5 +399,18 @@ RSpec.describe ConfigValidator do
     
     config_invalid = { 'port' => 'invalid' }
     expect(ConfigValidator.valid?(config_invalid, schema)).to be false
+  end
+
+  it 'validates max_elements for arrays' do
+    max_elem_schema = ConfigValidator::Schema.new do
+      field :items, Array, max_elements: 2
+    end
+
+    expect(ConfigValidator.validate({ 'items' => [1, 2] }, max_elem_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'items' => [1, 2, 3] }, max_elem_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('Maximum elements 2')
+    expect(result[:errors].first.actual).to eq(3)
   end
 end
