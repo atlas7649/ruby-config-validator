@@ -7,7 +7,7 @@ module ConfigValidator
       instance_eval(&block) if block_given?
     end
 
-    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, allowed_values: nil, min: nil, max: nil, pattern: nil, min_length: nil, max_length: nil, max_elements: nil, non_empty: false, &block)
+    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, allowed_values: nil, min: nil, max: nil, pattern: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, &block)
       @definitions[name.to_s] = {
         type: type,
         required: required,
@@ -21,6 +21,7 @@ module ConfigValidator
         pattern: pattern,
         min_length: min_length,
         max_length: max_length,
+        min_elements: min_elements,
         max_elements: max_elements,
         non_empty: non_empty,
         validate: block

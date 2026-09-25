@@ -413,4 +413,17 @@ RSpec.describe ConfigValidator do
     expect(result[:errors].first.expected).to eq('Maximum elements 2')
     expect(result[:errors].first.actual).to eq(3)
   end
+
+  it 'validates min_elements for arrays' do
+    min_elem_schema = ConfigValidator::Schema.new do
+      field :items, Array, min_elements: 2
+    end
+
+    expect(ConfigValidator.validate({ 'items' => [1, 2] }, min_elem_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'items' => [1] }, min_elem_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('Minimum elements 2')
+    expect(result[:errors].first.actual).to eq(1)
+  end
 end
