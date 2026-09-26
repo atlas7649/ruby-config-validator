@@ -25,7 +25,17 @@ module ConfigValidator
       value = validated_data[name]
 
       if value.nil?
-        if rules[:default].nil? && rules[:required]
+        is_required = rules[:required]
+        
+        # Check if field is required based on another field's value
+        if rules[:required_if]
+          dep_field = rules[:required_if].to_s
+          if validated_data.key?(dep_field) && validated_data[dep_field] == true
+            is_required = true
+          end
+        end
+
+        if rules[:default].nil? && is_required
           errors << ValidationError.new(name, 'Required', 'nil')
           next
         elsif rules[:default].nil?

@@ -493,4 +493,20 @@ RSpec.describe ConfigValidator do
     expect(result[:errors].first.path).to eq('nodes[1].ip')
     expect(result[:errors].first.expected).to eq('Unique value')
   end
+
+  it 'validates conditional requirements' do
+    cond_schema = ConfigValidator::Schema.new do
+      field :use_auth, :boolean, default: false
+      field :auth_token, String, required: false, required_if: :use_auth
+    end
+
+    # Valid: auth off, no token
+    expect(ConfigValidator.validate({ 'use_auth' => false }, cond_schema)[:valid]).to be true
+    # Valid: auth on, has token
+    expect(ConfigValidator.validate({ 'use_auth' => true, 'auth_token' => 'secret' }, cond_schema)[:valid]).to be true
+    # Invalid: auth on, no token
+    result = ConfigValidator.validate({ 'use_auth' => true }, cond_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('auth_token')
+  end
 end
