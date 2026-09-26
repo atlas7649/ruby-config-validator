@@ -509,4 +509,16 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.path).to eq('auth_token')
   end
+
+  it 'handles exceptions in custom validation blocks' do
+    crash_schema = ConfigValidator::Schema.new do
+      field :port, Integer do |val|
+        raise "Unexpected error"
+      end
+    end
+
+    result = ConfigValidator.validate({ 'port' => 8080 }, crash_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to include('Validation Exception')
+  end
 end
