@@ -153,7 +153,8 @@ module ConfigValidator
         end
 
         if rules[:validate]
-          validation_result = rules[:validate].call(value)
+          # Support cross-field validation by passing validated_data as second arg
+          validation_result = rules[:validate].arity == 2 ? rules[:validate].call(value, validated_data) : rules[:validate].call(value)
           unless validation_result
             msg = validation_result.is_a?(String) ? validation_result : 'Custom Validation'
             errors << ValidationError.new(name, msg, value)

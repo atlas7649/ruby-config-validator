@@ -446,4 +446,26 @@ RSpec.describe ConfigValidator do
     end
     expect(desc_schema.definitions['port'][:description]).to eq('The port to listen on')
   end
+
+  it 'supports cross-field validation' do
+    cross_schema = ConfigValidator::Schema.new do
+      field :ssl_enabled, :boolean
+      field :cert_path, String, required: false do |val, config|
+        if config['ssl_enabled'] && (val.nil? || val.strip.empty?)
+          'cert_path is required when ssl_enabled is true'
+        else
+          true
+        end
+      end
+    end
+
+    # Valid: SSL off, no cert
+    expect(ConfigValidator.validate({ 'ssl_enabled' => false }, cross_schema)[:valid]).to be true
+    # Valid: SSL on, has cert
+    expect(ConfigValidator.validate({ 'ssl_enabled' => true, 'cert_path' => '/etc/ssl/cert.pem' }, cross_schema)[:valid]).to be true
+    # Invalid: SSL on, no cert
+    result = ConfigValidator.validate({ 'ssl_enabled' => true }, cross_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('cert_path is required when ssl_enabled is true')
+  end
 end
