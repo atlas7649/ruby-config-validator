@@ -439,4 +439,11 @@ RSpec.describe ConfigValidator do
     expect(result[:errors].first.path).to eq('roles[1]')
     expect(result[:errors].first.expected).to include('admin', 'user', 'guest')
   end
+
+  it 'supports description in schema fields' do
+    desc_schema = ConfigValidator::Schema.new do
+      field :port, Integer, description: 'The port to listen on'
+    end
+    expect(desc_schema.definitions['port'][:description]).to eq('The port to listen on')
+  end
 end
