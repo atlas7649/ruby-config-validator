@@ -140,6 +140,20 @@ module ConfigValidator
           end
         end
 
+        if rules[:unique_elements] && value.is_a?(Array)
+          unique_field = rules[:unique_elements]
+          seen = {}
+          value.each_with_index do |item, idx|
+            next unless item.is_a?(Hash)
+            val = item[unique_field.to_s]
+            if seen.key?(val)
+              errors << ValidationError.new("#{name}[#{idx}].#{unique_field}", "Unique value", val)
+            else
+              seen[val] = true
+            end
+          end
+        end
+
         if rules[:pattern] && value.is_a?(String)
           unless value.match?(rules[:pattern])
             errors << ValidationError.new(name, "Pattern #{rules[:pattern].inspect}", value)

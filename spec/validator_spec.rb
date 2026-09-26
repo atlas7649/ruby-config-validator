@@ -468,4 +468,29 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.expected).to eq('cert_path is required when ssl_enabled is true')
   end
+
+  it 'validates uniqueness of elements in an array of hashes' do
+    unique_schema = ConfigValidator::Schema.new do
+      field :nodes, Array, unique_elements: :ip
+    end
+
+    config_valid = {
+      'nodes' => [
+        { 'ip' => '10.0.0.1', 'id' => 1 },
+        { 'ip' => '10.0.0.2', 'id' => 2 }
+      ]
+    }
+    expect(ConfigValidator.validate(config_valid, unique_schema)[:valid]).to be true
+
+    config_invalid = {
+      'nodes' => [
+        { 'ip' => '10.0.0.1', 'id' => 1 },
+        { 'ip' => '10.0.0.1', 'id' => 2 }
+      ]
+    }
+    result = ConfigValidator.validate(config_invalid, unique_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('nodes[1].ip')
+    expect(result[:errors].first.expected).to eq('Unique value')
+  end
 end
