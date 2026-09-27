@@ -2,8 +2,8 @@ module ConfigValidator
   class Schema
     attr_reader :definitions
 
-    def initialize(&block)
-      @definitions = {}
+    def initialize(definitions = nil, &block)
+      @definitions = definitions || {}
       instance_eval(&block) if block_given?
     end
 
