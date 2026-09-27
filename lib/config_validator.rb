@@ -139,6 +139,13 @@ module ConfigValidator
           end
         end
 
+        if rules[:precision] && value.is_a?(Float)
+          decimal_part = value.to_s.split('.').last
+          if decimal_part && decimal_part.length > rules[:precision]
+            errors << ValidationError.new(name, "Maximum precision #{rules[:precision]}", decimal_part.length)
+          end
+        end
+
         if (rules[:min_length] || rules[:max_length])
           if value.is_a?(Array)
             if rules[:min_length] && value.length < rules[:min_length]
