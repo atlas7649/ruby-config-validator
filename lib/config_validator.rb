@@ -36,7 +36,8 @@ module ConfigValidator
         end
 
         if rules[:default].nil? && is_required
-          errors << ValidationError.new(name, 'Required', 'nil')
+          msg = rules[:required_message] || 'Required'
+          errors << ValidationError.new(name, msg, 'nil')
           next
         elsif rules[:default].nil?
           next

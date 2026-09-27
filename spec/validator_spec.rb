@@ -521,4 +521,14 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.expected).to include('Validation Exception')
   end
+
+  it 'supports custom required messages' do
+    custom_req_schema = ConfigValidator::Schema.new do
+      field :api_key, String, required_message: 'API key is missing from configuration'
+    end
+
+    result = ConfigValidator.validate({}, custom_req_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('API key is missing from configuration')
+  end
 end

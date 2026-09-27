@@ -6,7 +6,11 @@ module ConfigValidator
       @path = path
       @expected = expected
       @actual = actual
-      super("Invalid value at '#{path}': expected #{expected}, got #{actual.inspect}")
+      super(message)
+    end
+
+    def message
+      "Invalid value at '#{path}': expected #{expected}, got #{actual.inspect}"
     end
   end
 end
