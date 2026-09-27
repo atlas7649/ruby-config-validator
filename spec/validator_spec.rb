@@ -531,4 +531,28 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.expected).to eq('API key is missing from configuration')
   end
+
+  it 'handles allow_nil option' do
+    nil_schema = ConfigValidator::Schema.new do
+      field :optional_nil, String, required: false, allow_nil: true
+      field :no_nil, String, required: false, allow_nil: false
+    end
+
+    # allow_nil: true -> valid
+    expect(ConfigValidator.validate({ 'optional_nil' => nil }, nil_schema)[:valid]).to be true
+    # allow_nil: false -> invalid (type mismatch String vs NilClass)
+    result = ConfigValidator.validate({ 'no_nil' => nil }, nil_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('no_nil')
+  end
+
+  it 'does not apply default when allow_nil is true and value is nil' do
+    def_nil_schema = ConfigValidator::Schema.new do
+      field :val, String, required: false, default: 'default', allow_nil: true
+    end
+
+    result = ConfigValidator.validate({ 'val' => nil }, def_nil_schema)
+    expect(result[:valid]).to be true
+    expect(result[:data]['val']).to be_nil
+  end
 end
