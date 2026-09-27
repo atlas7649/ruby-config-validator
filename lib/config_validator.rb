@@ -102,6 +102,10 @@ module ConfigValidator
               unless BOOLEAN_TYPES.any? { |t| item.is_a?(t) }
                 errors << ValidationError.new("#{name}[#{idx}]", 'Boolean', item)
               end
+            elsif item_type.respond_to?(:call)
+              unless item_type.call(item)
+                errors << ValidationError.new("#{name}[#{idx}]", "Custom Type", item)
+              end
             elsif !item.is_a?(item_type)
               errors << ValidationError.new("#{name}[#{idx}]", item_type, item)
             end
@@ -118,6 +122,10 @@ module ConfigValidator
       elsif rules[:type] == :boolean
         unless BOOLEAN_TYPES.any? { |t| value.is_a?(t) }
           type_error = ValidationError.new(name, 'Boolean', value)
+        end
+      elsif rules[:type].respond_to?(:call)
+        unless rules[:type].call(value)
+          type_error = ValidationError.new(name, "Custom Type", value)
         end
       elsif !value.is_a?(rules[:type])
         type_error = ValidationError.new(name, rules[:type], value)
@@ -224,6 +232,8 @@ module ConfigValidator
     types.any? do |type|
       if type == :boolean
         BOOLEAN_TYPES.any? { |t| value.is_a?(t) }
+      elsif type.respond_to?(:call)
+        type.call(value)
       else
         value.is_a?(type)
       end

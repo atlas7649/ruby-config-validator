@@ -594,4 +594,44 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.path).to eq('mode_config')
   end
+
+  it 'validates custom callable types' do
+    is_even = ->(val) { val.is_a?(Integer) && val.even? }
+    custom_type_schema = ConfigValidator::Schema.new do
+      field :even_number, is_even
+    end
+
+    expect(ConfigValidator.validate({ 'even_number' => 2 }, custom_type_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'even_number' => 3 }, custom_type_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('Custom Type')
+  end
+
+  it 'validates custom callable types in arrays' do
+    is_even = ->(val) { val.is_a?(Integer) && val.even? }
+    custom_type_schema = ConfigValidator::Schema.new do
+      field :even_numbers, Array, element_type: is_even
+    end
+
+    expect(ConfigValidator.validate({ 'even_numbers' => [2, 4, 6] }, custom_type_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'even_numbers' => [2, 3, 4] }, custom_type_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('even_numbers[1]')
+    expect(result[:errors].first.expected).to eq('Custom Type')
+  end
+
+  it 'validates custom callable types in union types' do
+    is_even = ->(val) { val.is_a?(Integer) && val.even? }
+    union_custom_schema = ConfigValidator::Schema.new do
+      field :val, [is_even, String]
+    end
+
+    expect(ConfigValidator.validate({ 'val' => 2 }, union_custom_schema)[:valid]).to be true
+    expect(ConfigValidator.validate({ 'val' => 'hello' }, union_custom_schema)[:valid]).to be true
+    
+    result = ConfigValidator.validate({ 'val' => 3 }, union_custom_schema)
+    expect(result[:valid]).to be false
+  end
 end
