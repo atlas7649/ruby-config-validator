@@ -133,12 +133,21 @@ module ConfigValidator
           end
         end
 
-        if (rules[:min_length] || rules[:max_length]) && value.is_a?(Array)
-          if rules[:min_length] && value.length < rules[:min_length]
-            errors << ValidationError.new(name, "Minimum length #{rules[:min_length]}", value.length)
-          end
-          if rules[:max_length] && value.length > rules[:max_length]
-            errors << ValidationError.new(name, "Maximum length #{rules[:max_length]}", value.length)
+        if (rules[:min_length] || rules[:max_length])
+          if value.is_a?(Array)
+            if rules[:min_length] && value.length < rules[:min_length]
+              errors << ValidationError.new(name, "Minimum length #{rules[:min_length]}", value.length)
+            end
+            if rules[:max_length] && value.length > rules[:max_length]
+              errors << ValidationError.new(name, "Maximum length #{rules[:max_length]}", value.length)
+            end
+          elsif value.is_a?(String)
+            if rules[:min_length] && value.length < rules[:min_length]
+              errors << ValidationError.new(name, "Minimum length #{rules[:min_length]}", value.length)
+            end
+            if rules[:max_length] && value.length > rules[:max_length]
+              errors << ValidationError.new(name, "Maximum length #{rules[:max_length]}", value.length)
+            end
           end
         end
 

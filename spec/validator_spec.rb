@@ -555,4 +555,29 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be true
     expect(result[:data]['val']).to be_nil
   end
+
+  it 'validates string length' do
+    str_len_schema = ConfigValidator::Schema.new do
+      field :username, String, min_length: 3, max_length: 10
+    end
+
+    expect(ConfigValidator.validate({ 'username' => 'bob' }, str_len_schema)[:valid]).to be true
+    expect(ConfigValidator.validate({ 'username' => 'bobsmith' }, str_len_schema)[:valid]).to be true
+
+    result_short = ConfigValidator.validate({ 'username' => 'bo' }, str_len_schema)
+    expect(result_short[:valid]).to be false
+    expect(result_short[:errors].first.expected).to eq('Minimum length 3')
+
+    result_long = ConfigValidator.validate({ 'username' => 'bobsmithson' }, str_len_schema)
+    expect(result_long[:valid]).to be false
+    expect(result_long[:errors].first.expected).to eq('Maximum length 10')
+  end
+
+  it 'returns a list of defined fields' do
+    s = ConfigValidator::Schema.new do
+      field :a, String
+      field :b, Integer
+    end
+    expect(s.fields).to contain_exactly('a', 'b')
+  end
 end

@@ -33,5 +33,9 @@ module ConfigValidator
         validate: block
       }
     end
+
+    def fields
+      @definitions.keys
+    end
   end
 end
