@@ -634,4 +634,14 @@ RSpec.describe ConfigValidator do
     result = ConfigValidator.validate({ 'val' => 3 }, union_custom_schema)
     expect(result[:valid]).to be false
   end
+
+  it 'supports custom type messages' do
+    custom_type_msg_schema = ConfigValidator::Schema.new do
+      field :port, Integer, type_message: 'Port must be a valid number'
+    end
+
+    result = ConfigValidator.validate({ 'port' => 'invalid' }, custom_type_msg_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('Port must be a valid number')
+  end
 end

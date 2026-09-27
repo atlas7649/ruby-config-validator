@@ -57,6 +57,7 @@ module ConfigValidator
       end
 
       type_error = nil
+      type_msg = rules[:type_message]
 
       if rules[:type] == ConfigValidator::Schema
         if value.is_a?(Hash)
@@ -70,11 +71,11 @@ module ConfigValidator
           end
           validated_data[name] = nested_result[:data]
         else
-          type_error = ValidationError.new(name, 'Hash (Nested Schema)', value)
+          type_error = ValidationError.new(name, type_msg || 'Hash (Nested Schema)', value)
         end
       elsif rules[:type] == Array
         if !value.is_a?(Array)
-          type_error = ValidationError.new(name, 'Array', value)
+          type_error = ValidationError.new(name, type_msg || 'Array', value)
         elsif rules[:element_type]
           value.each_with_index do |item, idx|
             if item.nil?
@@ -117,18 +118,18 @@ module ConfigValidator
         end
       elsif rules[:type].is_a?(Array)
         unless check_type(value, rules[:type])
-          type_error = ValidationError.new(name, "One of #{rules[:type].inspect}", value)
+          type_error = ValidationError.new(name, type_msg || "One of #{rules[:type].inspect}", value)
         end
       elsif rules[:type] == :boolean
         unless BOOLEAN_TYPES.any? { |t| value.is_a?(t) }
-          type_error = ValidationError.new(name, 'Boolean', value)
+          type_error = ValidationError.new(name, type_msg || 'Boolean', value)
         end
       elsif rules[:type].respond_to?(:call)
         unless rules[:type].call(value)
-          type_error = ValidationError.new(name, "Custom Type", value)
+          type_error = ValidationError.new(name, type_msg || "Custom Type", value)
         end
       elsif !value.is_a?(rules[:type])
-        type_error = ValidationError.new(name, rules[:type], value)
+        type_error = ValidationError.new(name, type_msg || rules[:type], value)
       end
 
       if type_error

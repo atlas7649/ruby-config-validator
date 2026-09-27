@@ -7,7 +7,7 @@ module ConfigValidator
       instance_eval(&block) if block_given?
     end
 
-    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, allowed_values: nil, min: nil, max: nil, precision: nil, pattern: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, &block)
+    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, allowed_values: nil, min: nil, max: nil, precision: nil, pattern: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, type_message: nil, &block)
       
       actual_schema = schema
       if block_given? && type == ConfigValidator::Schema
@@ -40,6 +40,7 @@ module ConfigValidator
         required_if_value: required_if_value,
         required_message: required_message,
         allow_nil: allow_nil,
+        type_message: type_message,
         validate: (type == ConfigValidator::Schema && block_given?) ? nil : block
       }
     end
