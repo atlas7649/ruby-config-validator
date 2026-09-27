@@ -77,10 +77,11 @@ module ConfigValidator
         if !value.is_a?(Array)
           type_error = ValidationError.new(name, type_msg || 'Array', value)
         elsif rules[:element_type]
+          elem_type_msg = rules[:element_type_message]
           value.each_with_index do |item, idx|
             if item.nil?
               unless rules[:element_optional]
-                errors << ValidationError.new("#{name}[#{idx}]", rules[:element_type], item)
+                errors << ValidationError.new("#{name}[#{idx}]", elem_type_msg || rules[:element_type], item)
               end
               next
             end
@@ -97,18 +98,18 @@ module ConfigValidator
               value[idx] = nested_result[:data]
             elsif item_type.is_a?(Array)
               unless check_type(item, item_type)
-                errors << ValidationError.new("#{name}[#{idx}]", "One of #{item_type.inspect}", item)
+                errors << ValidationError.new("#{name}[#{idx}]", elem_type_msg || "One of #{item_type.inspect}", item)
               end
             elsif item_type == :boolean
               unless BOOLEAN_TYPES.any? { |t| item.is_a?(t) }
-                errors << ValidationError.new("#{name}[#{idx}]", 'Boolean', item)
+                errors << ValidationError.new("#{name}[#{idx}]", elem_type_msg || 'Boolean', item)
               end
             elsif item_type.respond_to?(:call)
               unless item_type.call(item)
-                errors << ValidationError.new("#{name}[#{idx}]", "Custom Type", item)
+                errors << ValidationError.new("#{name}[#{idx}]", elem_type_msg || "Custom Type", item)
               end
             elsif !item.is_a?(item_type)
-              errors << ValidationError.new("#{name}[#{idx}]", item_type, item)
+              errors << ValidationError.new("#{name}[#{idx}]", elem_type_msg || item_type, item)
             end
 
             if rules[:element_allowed_values] && !rules[:element_allowed_values].include?(item)
@@ -135,7 +136,9 @@ module ConfigValidator
       if type_error
         errors << type_error
       else
-        if rules[:allowed_values] && !rules[:allowed_values].include?(value)
+        if rules[:non_nil] && value.nil?
+          errors << ValidationError.new(name, 'Cannot be nil', value)
+        elsif rules[:allowed_values] && !rules[:allowed_values].include?(value)
           errors << ValidationError.new(name, "One of #{rules[:allowed_values].inspect}", value)
         end
 

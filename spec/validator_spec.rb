@@ -658,4 +658,29 @@ RSpec.describe ConfigValidator do
     expect(hash['db']).to be_a(Hash)
     expect(hash['db']).to have_key('host')
   end
+
+  it 'validates non_nil constraint' do
+    non_nil_schema = ConfigValidator::Schema.new do
+      field :optional_but_not_nil, String, required: false, non_nil: true
+    end
+
+    # Field missing entirely -> valid (required: false)
+    expect(ConfigValidator.validate({}, non_nil_schema)[:valid]).to be true
+    # Field present and valid -> valid
+    expect(ConfigValidator.validate({ 'optional_but_not_nil' => 'val' }, non_nil_schema)[:valid]).to be true
+    # Field present but nil -> invalid
+    result = ConfigValidator.validate({ 'optional_but_not_nil' => nil }, non_nil_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('Cannot be nil')
+  end
+
+  it 'supports custom element type messages for arrays' do
+    arr_schema = ConfigValidator::Schema.new do
+      field :ids, Array, element_type: Integer, element_type_message: 'IDs must be integers'
+    end
+
+    result = ConfigValidator.validate({ 'ids' => [1, '2'] }, arr_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.expected).to eq('IDs must be integers')
+  end
 end
