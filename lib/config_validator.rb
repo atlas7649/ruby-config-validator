@@ -30,8 +30,14 @@ module ConfigValidator
         # Check if field is required based on another field's value
         if rules[:required_if]
           dep_field = rules[:required_if].to_s
-          if validated_data.key?(dep_field) && validated_data[dep_field] == true
-            is_required = true
+          dep_value = rules[:required_if_value]
+          current_dep_val = validated_data[dep_field]
+
+          if dep_value.nil?
+            # Default behavior: required if dep_field is truthy
+            is_required = true if current_dep_val && !BOOLEAN_TYPES.any? { |t| current_dep_val.is_a?(t) } || current_dep_val == true
+          else
+            is_required = true if current_dep_val == dep_value
           end
         end
 

@@ -7,12 +7,20 @@ module ConfigValidator
       instance_eval(&block) if block_given?
     end
 
-    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, allowed_values: nil, min: nil, max: nil, pattern: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, required_if: nil, required_message: nil, allow_nil: false, &block)
+    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, allowed_values: nil, min: nil, max: nil, pattern: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, &block)
+      
+      actual_schema = schema
+      if block_given? && type == ConfigValidator::Schema
+        actual_schema = ConfigValidator::Schema.new do
+          instance_eval(&block)
+        end
+      end
+
       @definitions[name.to_s] = {
         type: type,
         required: required,
         default: default,
-        schema: schema,
+        schema: actual_schema,
         element_type: element_type,
         element_optional: element_optional,
         element_allowed_values: element_allowed_values,
@@ -28,9 +36,10 @@ module ConfigValidator
         description: description,
         unique_elements: unique_elements,
         required_if: required_if,
+        required_if_value: required_if_value,
         required_message: required_message,
         allow_nil: allow_nil,
-        validate: block
+        validate: (type == ConfigValidator::Schema && block_given?) ? nil : block
       }
     end
 

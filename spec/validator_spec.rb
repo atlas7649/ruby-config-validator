@@ -38,15 +38,13 @@ RSpec.describe ConfigValidator do
     expect(result[:data]['debug']).to eq(false)
   end
 
-  it 'validates nested configurations' do
-    db_schema = ConfigValidator::Schema.new do
-      field :user, String
-      field :pass, String
-    end
-
+  it 'validates nested configurations with blocks' do
     complex_schema = ConfigValidator::Schema.new do
       field :app_name, String
-      field :database, ConfigValidator::Schema, schema: db_schema
+      field :database, ConfigValidator::Schema do
+        field :user, String
+        field :pass, String
+      end
     end
 
     config = {
@@ -579,5 +577,21 @@ RSpec.describe ConfigValidator do
       field :b, Integer
     end
     expect(s.fields).to contain_exactly('a', 'b')
+  end
+
+  it 'supports required_if_value for specific values' do
+    cond_val_schema = ConfigValidator::Schema.new do
+      field :mode, String
+      field :mode_config, String, required: false, required_if: :mode, required_if_value: 'advanced'
+    end
+
+    # Valid: mode is basic
+    expect(ConfigValidator.validate({ 'mode' => 'basic' }, cond_val_schema)[:valid]).to be true
+    # Valid: mode is advanced, config provided
+    expect(ConfigValidator.validate({ 'mode' => 'advanced', 'mode_config' => 'val' }, cond_val_schema)[:valid]).to be true
+    # Invalid: mode is advanced, config missing
+    result = ConfigValidator.validate({ 'mode' => 'advanced' }, cond_val_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('mode_config')
   end
 end
