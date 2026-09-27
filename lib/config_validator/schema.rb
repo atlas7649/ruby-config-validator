@@ -48,5 +48,15 @@ module ConfigValidator
     def fields
       @definitions.keys
     end
+
+    def to_h
+      @definitions.each_with_object({}) do |(name, rules), hash|
+        processed_rules = rules.dup
+        if processed_rules[:schema].is_a?(ConfigValidator::Schema)
+          processed_rules[:schema] = processed_rules[:schema].to_h
+        end
+        hash[name] = processed_rules
+      end
+    end
   end
 end

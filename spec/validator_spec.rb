@@ -644,4 +644,18 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.expected).to eq('Port must be a valid number')
   end
+
+  it 'exports schema to hash via to_h' do
+    s = ConfigValidator::Schema.new do
+      field :port, Integer, default: 80
+      field :db, ConfigValidator::Schema do
+        field :host, String
+      end
+    end
+    hash = s.to_h
+    expect(hash).to have_key('port')
+    expect(hash['port'][:default]).to eq(80)
+    expect(hash['db']).to be_a(Hash)
+    expect(hash['db']).to have_key('host')
+  end
 end
