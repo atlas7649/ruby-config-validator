@@ -22,19 +22,18 @@ module ConfigValidator
     end
 
     schema.definitions.each do |name, rules|
+      exists = validated_data.key?(name)
       value = validated_data[name]
 
-      if value.nil?
+      if !exists
         is_required = rules[:required]
         
-        # Check if field is required based on another field's value
         if rules[:required_if]
           dep_field = rules[:required_if].to_s
           dep_value = rules[:required_if_value]
           current_dep_val = validated_data[dep_field]
 
           if dep_value.nil?
-            # Default behavior: required if dep_field is truthy
             is_required = true if current_dep_val && !BOOLEAN_TYPES.any? { |t| current_dep_val.is_a?(t) } || current_dep_val == true
           else
             is_required = true if current_dep_val == dep_value
@@ -45,16 +44,18 @@ module ConfigValidator
           msg = rules[:required_message] || 'Required'
           errors << ValidationError.new(name, msg, 'nil')
           next
-        elsif !is_required && rules[:allow_nil]
-          # Explicitly allowed to be nil, skip further validation
-          next
-        elsif rules[:default].nil? && !is_required
+        elsif rules[:default].nil?
           next
         else
           validated_data[name] = rules[:default]
           value = rules[:default]
         end
+      elsif value.nil? && !rules[:allow_nil]
+        errors << ValidationError.new(name, 'Cannot be nil', value)
+        next
       end
+
+      next if value.nil? && rules[:allow_nil]
 
       type_error = nil
       type_msg = rules[:type_message]
@@ -223,7 +224,6 @@ module ConfigValidator
 
         if rules[:validate]
           begin
-            # Support cross-field validation by passing validated_data as second arg
             validation_result = rules[:validate].arity == 2 ? rules[:validate].call(value, validated_data) : rules[:validate].call(value)
             unless validation_result == true
               msg = validation_result.is_a?(String) ? validation_result : 'Custom Validation'
