@@ -700,4 +700,27 @@ RSpec.describe ConfigValidator do
     expect(result[:errors].first.path).to eq('api_key')
     expect(result[:errors].first.expected).to eq('Mutually exclusive with oauth_token')
   end
+
+  it 'validates min_elements and max_elements for arrays of nested schemas' do
+    node_schema = ConfigValidator::Schema.new do
+      field :ip, String
+    end
+
+    cluster_schema = ConfigValidator::Schema.new do
+      field :nodes, Array, element_type: ConfigValidator::Schema, schema: node_schema, min_elements: 1, max_elements: 2
+    end
+
+    # Valid: 1 node
+    expect(ConfigValidator.validate({ 'nodes' => [{ 'ip' => '1.1.1.1' }] }, cluster_schema)[:valid]).to be true
+    # Valid: 2 nodes
+    expect(ConfigValidator.validate({ 'nodes' => [{ 'ip' => '1.1.1.1' }, { 'ip' => '1.1.1.2' }] }, cluster_schema)[:valid]).to be true
+    # Invalid: 0 nodes
+    result_empty = ConfigValidator.validate({ 'nodes' => [] }, cluster_schema)
+    expect(result_empty[:valid]).to be false
+    expect(result_empty[:errors].first.expected).to eq('Minimum elements 1')
+    # Invalid: 3 nodes
+    result_too_many = ConfigValidator.validate({ 'nodes' => [{ 'ip' => '1.1.1.1' }, { 'ip' => '1.1.1.2' }, { 'ip' => '1.1.1.3' }] }, cluster_schema)
+    expect(result_too_many[:valid]).to be false
+    expect(result_too_many[:errors].first.expected).to eq('Maximum elements 2')
+  end
 end
