@@ -723,4 +723,22 @@ RSpec.describe ConfigValidator do
     expect(result_too_many[:valid]).to be false
     expect(result_too_many[:errors].first.expected).to eq('Maximum elements 2')
   end
+
+  it 'validates element_min and element_max for arrays' do
+    range_arr_schema = ConfigValidator::Schema.new do
+      field :ports, Array, element_type: Integer, element_min: 1024, element_max: 65535
+    end
+
+    expect(ConfigValidator.validate({ 'ports' => [8080, 9000] }, range_arr_schema)[:valid]).to be true
+
+    result_low = ConfigValidator.validate({ 'ports' => [80, 8080] }, range_arr_schema)
+    expect(result_low[:valid]).to be false
+    expect(result_low[:errors].first.path).to eq('ports[0]')
+    expect(result_low[:errors].first.expected).to eq('Minimum element value 1024')
+
+    result_high = ConfigValidator.validate({ 'ports' => [8080, 70000] }, range_arr_schema)
+    expect(result_high[:valid]).to be false
+    expect(result_high[:errors].first.path).to eq('ports[1]')
+    expect(result_high[:errors].first.expected).to eq('Maximum element value 65535')
+  end
 end

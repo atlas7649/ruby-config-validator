@@ -116,6 +116,15 @@ module ConfigValidator
             if rules[:element_allowed_values] && !rules[:element_allowed_values].include?(item)
               errors << ValidationError.new("#{name}[#{idx}]", "One of #{rules[:element_allowed_values].inspect}", item)
             end
+
+            if item.is_a?(Numeric)
+              if rules[:element_min] && item < rules[:element_min]
+                errors << ValidationError.new("#{name}[#{idx}]", "Minimum element value #{rules[:element_min]}", item)
+              end
+              if rules[:element_max] && item > rules[:element_max]
+                errors << ValidationError.new("#{name}[#{idx}]", "Maximum element value #{rules[:element_max]}", item)
+              end
+            end
           end
         end
       elsif rules[:type].is_a?(Array)
