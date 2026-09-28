@@ -142,6 +142,13 @@ module ConfigValidator
           errors << ValidationError.new(name, "One of #{rules[:allowed_values].inspect}", value)
         end
 
+        if rules[:exclusive_with] && !value.nil?
+          exclusive_field = rules[:exclusive_with].to_s
+          if !validated_data[exclusive_field].nil?
+            errors << ValidationError.new(name, "Mutually exclusive with #{exclusive_field}", value)
+          end
+        end
+
         if (rules[:min] || rules[:max]) && value.is_a?(Numeric)
           if rules[:min] && value < rules[:min]
             errors << ValidationError.new(name, "Minimum #{rules[:min]}", value)

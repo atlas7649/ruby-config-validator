@@ -683,4 +683,21 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be false
     expect(result[:errors].first.expected).to eq('IDs must be integers')
   end
+
+  it 'validates mutually exclusive fields' do
+    exclusive_schema = ConfigValidator::Schema.new do
+      field :api_key, String, required: false, exclusive_with: :oauth_token
+      field :oauth_token, String, required: false
+    end
+
+    # Valid: only api_key
+    expect(ConfigValidator.validate({ 'api_key' => 'key' }, exclusive_schema)[:valid]).to be true
+    # Valid: only oauth_token
+    expect(ConfigValidator.validate({ 'oauth_token' => 'token' }, exclusive_schema)[:valid]).to be true
+    # Invalid: both provided
+    result = ConfigValidator.validate({ 'api_key' => 'key', 'oauth_token' => 'token' }, exclusive_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('api_key')
+    expect(result[:errors].first.expected).to eq('Mutually exclusive with oauth_token')
+  end
 end
