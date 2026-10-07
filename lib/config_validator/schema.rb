@@ -55,6 +55,10 @@ module ConfigValidator
       all_definitions.keys
     end
 
+    def defined?(name)
+      all_definitions.key?(name.to_s)
+    end
+
     def all_definitions
       return @definitions if @parent.nil?
       @parent.all_definitions.merge(@definitions)
