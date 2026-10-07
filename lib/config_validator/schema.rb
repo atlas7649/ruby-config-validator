@@ -2,8 +2,9 @@ module ConfigValidator
   class Schema
     attr_reader :definitions
 
-    def initialize(definitions = nil, &block)
+    def initialize(definitions = nil, parent = nil, &block)
       @definitions = definitions || {}
+      @parent = parent
       instance_eval(&block) if block_given?
     end
 
@@ -51,11 +52,16 @@ module ConfigValidator
     end
 
     def fields
-      @definitions.keys
+      all_definitions.keys
+    end
+
+    def all_definitions
+      return @definitions if @parent.nil?
+      @parent.all_definitions.merge(@definitions)
     end
 
     def to_h
-      @definitions.each_with_object({}) do |(name, rules), hash|
+      all_definitions.each_with_object({}) do |(name, rules), hash|
         processed_rules = rules.dup
         if processed_rules[:schema].is_a?(ConfigValidator::Schema)
           processed_rules[:schema] = processed_rules[:schema].to_h

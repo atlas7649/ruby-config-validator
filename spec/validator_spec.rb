@@ -86,8 +86,7 @@ RSpec.describe ConfigValidator do
     end
 
     config = { 'app_name' => 'MyApp' }
-    result = ConfigValidator.validate(config, complex_schema)
-    expect(result[:valid]).to be true
+    expect(ConfigValidator.validate(config, complex_schema)[:valid]).to be true
   end
 
   it 'validates array types and elements' do
@@ -740,5 +739,31 @@ RSpec.describe ConfigValidator do
     expect(result_high[:valid]).to be false
     expect(result_high[:errors].first.path).to eq('ports[1]')
     expect(result_high[:errors].first.expected).to eq('Maximum element value 65535')
+  end
+
+  it 'supports schema inheritance' do
+    base_schema = ConfigValidator::Schema.new do
+      field :api_version, String
+      field :timeout, Integer, default: 30
+    end
+
+    prod_schema = ConfigValidator::Schema.new(nil, base_schema) do
+      field :api_version, String, default: 'v2'
+      field :cluster_id, String
+    end
+
+    # Should have fields from both
+    expect(prod_schema.fields).to contain_exactly('api_version', 'timeout', 'cluster_id')
+
+    # Valid config
+    config = { 'api_version' => 'v2', 'cluster_id' => 'prod-1' }
+    result = ConfigValidator.validate(config, prod_schema)
+    expect(result[:valid]).to be true
+    expect(result[:data]['timeout']).to eq(30)
+
+    # Invalid config (missing cluster_id)
+    result_invalid = ConfigValidator.validate({ 'api_version' => 'v2' }, prod_schema)
+    expect(result_invalid[:valid]).to be false
+    expect(result_invalid[:errors].first.path).to eq('cluster_id')
   end
 end

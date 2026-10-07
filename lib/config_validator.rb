@@ -15,13 +15,13 @@ module ConfigValidator
     validated_data = config_data ? config_data.dup : {}
 
     if strict && config_data.is_a?(Hash)
-      unknown_keys = config_data.keys - schema.definitions.keys
+      unknown_keys = config_data.keys - schema.all_definitions.keys
       unknown_keys.each do |key|
         errors << ValidationError.new(key, 'Known Key', key)
       end
     end
 
-    schema.definitions.each do |name, rules|
+    schema.all_definitions.each do |name, rules|
       exists = validated_data.key?(name)
       value = validated_data[name]
 
