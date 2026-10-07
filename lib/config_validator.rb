@@ -171,10 +171,10 @@ module ConfigValidator
 
         if (rules[:min] || rules[:max]) && value.is_a?(Numeric)
           if rules[:min] && value < rules[:min]
-            errors << ValidationError.new(name, "Minimum #{rules[:min]}", value)
+            errors << ValidationError.new(name, rules[:min_message] || "Minimum #{rules[:min]}", value)
           end
           if rules[:max] && value > rules[:max]
-            errors << ValidationError.new(name, "Maximum #{rules[:max]}", value)
+            errors << ValidationError.new(name, rules[:max_message] || "Maximum #{rules[:max]}", value)
           end
         end
 
@@ -188,17 +188,17 @@ module ConfigValidator
         if (rules[:min_length] || rules[:max_length])
           if value.is_a?(Array)
             if rules[:min_length] && value.length < rules[:min_length]
-              errors << ValidationError.new(name, "Minimum length #{rules[:min_length]}", value.length)
+              errors << ValidationError.new(name, rules[:min_length_message] || "Minimum length #{rules[:min_length]}", value.length)
             end
             if rules[:max_length] && value.length > rules[:max_length]
-              errors << ValidationError.new(name, "Maximum length #{rules[:max_length]}", value.length)
+              errors << ValidationError.new(name, rules[:max_length_message] || "Maximum length #{rules[:max_length]}", value.length)
             end
           elsif value.is_a?(String)
             if rules[:min_length] && value.length < rules[:min_length]
-              errors << ValidationError.new(name, "Minimum length #{rules[:min_length]}", value.length)
+              errors << ValidationError.new(name, rules[:min_length_message] || "Minimum length #{rules[:min_length]}", value.length)
             end
             if rules[:max_length] && value.length > rules[:max_length]
-              errors << ValidationError.new(name, "Maximum length #{rules[:max_length]}", value.length)
+              errors << ValidationError.new(name, rules[:max_length_message] || "Maximum length #{rules[:max_length]}", value.length)
             end
           end
         end

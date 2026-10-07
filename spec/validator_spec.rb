@@ -804,4 +804,30 @@ RSpec.describe ConfigValidator do
     expect(result[:errors].first.path).to eq('deprecated_key')
     expect(result[:errors].first.expected).to eq('Forbidden')
   end
+
+  it 'supports custom range error messages' do
+    range_schema = ConfigValidator::Schema.new do
+      field :port, Integer, min: 1024, min_message: 'Port is too low'
+      field :ratio, Float, max: 1.0, max_message: 'Ratio is too high'
+    end
+
+    result_low = ConfigValidator.validate({ 'port' => 80, 'ratio' => 0.5 }, range_schema)
+    expect(result_low[:errors].first.expected).to eq('Port is too low')
+
+    result_high = ConfigValidator.validate({ 'port' => 8080, 'ratio' => 1.1 }, range_schema)
+    expect(result_high[:errors].first.expected).to eq('Ratio is too high')
+  end
+
+  it 'supports custom length error messages' do
+    len_schema = ConfigValidator::Schema.new do
+      field :username, String, min_length: 3, min_length_message: 'Username too short'
+      field :bio, String, max_length: 10, max_length_message: 'Bio too long'
+    end
+
+    result_short = ConfigValidator.validate({ 'username' => 'bo', 'bio' => 'hi' }, len_schema)
+    expect(result_short[:errors].first.expected).to eq('Username too short')
+
+    result_long = ConfigValidator.validate({ 'username' => 'bob', 'bio' => 'this is way too long' }, len_schema)
+    expect(result_long[:errors].first.expected).to eq('Bio too long')
+  end
 end
