@@ -81,10 +81,15 @@ module ConfigValidator
           elem_type_msg = rules[:element_type_message]
           value.each_with_index do |item, idx|
             if item.nil?
-              unless rules[:element_optional]
+              if rules[:element_default]
+                item = rules[:element_default]
+                value[idx] = item
+              elsif !rules[:element_optional]
                 errors << ValidationError.new("#{name}[#{idx}]", elem_type_msg || rules[:element_type], item)
+                next
+              else
+                next
               end
-              next
             end
 
             item_type = rules[:element_type]

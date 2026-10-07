@@ -777,4 +777,15 @@ RSpec.describe ConfigValidator do
   it 'returns no errors message when empty' do
     expect(ConfigValidator.format_errors([])).to eq('No errors found.')
   end
+
+  it 'applies default values for nil array elements' do
+    arr_schema = ConfigValidator::Schema.new do
+      field :tags, Array, element_type: String, element_default: 'unknown'
+    end
+
+    config = { 'tags' => ['ruby', nil, 'validation'] }
+    result = ConfigValidator.validate(config, arr_schema)
+    expect(result[:valid]).to be true
+    expect(result[:data]['tags'][1]).to eq('unknown')
+  end
 end
