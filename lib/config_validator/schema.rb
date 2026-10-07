@@ -8,7 +8,7 @@ module ConfigValidator
       instance_eval(&block) if block_given?
     end
 
-    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, element_type_message: nil, allowed_values: nil, min: nil, max: nil, precision: nil, pattern: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, non_nil: false, type_message: nil, exclusive_with: nil, element_min: nil, element_max: nil, strict_types: false, element_default: nil, forbidden: false, min_message: nil, max_message: nil, min_length_message: nil, max_length_message: nil, constraint: nil, required_if_schema: nil, &block)
+    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, element_type_message: nil, allowed_values: nil, min: nil, max: nil, precision: nil, pattern: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, non_nil: false, type_message: nil, exclusive_with: nil, element_min: nil, element_max: nil, strict_types: false, element_default: nil, forbidden: false, min_message: nil, max_message: nil, min_length_message: nil, max_length_message: nil, constraint: nil, required_if_schema: nil, depends_on: nil, depends_on_value: nil, &block)
       
       actual_schema = schema
       if block_given? && type == ConfigValidator::Schema
@@ -56,6 +56,8 @@ module ConfigValidator
         max_length_message: max_length_message,
         constraint: constraint,
         required_if_schema: required_if_schema,
+        depends_on: depends_on,
+        depends_on_value: depends_on_value,
         validate: (type == ConfigValidator::Schema && block_given?) ? nil : block
       }
     end

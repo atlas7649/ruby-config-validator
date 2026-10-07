@@ -247,6 +247,22 @@ module ConfigValidator
           end
         end
 
+        if rules[:depends_on]
+          dep_field = rules[:depends_on].to_s
+          dep_value = rules[:depends_on_value]
+          current_dep_val = validated_data[dep_field]
+          
+          is_dep_met = if dep_value.nil?
+            current_dep_val && !BOOLEAN_TYPES.any? { |t| current_dep_val.is_a?(t) } || current_dep_val == true
+          else
+            current_dep_val == dep_value
+          end
+
+          unless is_dep_met
+            errors << ValidationError.new(name, "Depends on #{dep_field} being #{dep_value || 'truthy'}", value)
+          end
+        end
+
         if rules[:validate]
           begin
             validation_result = rules[:validate].arity == 2 ? rules[:validate].call(value, validated_data) : rules[:validate].call(value)
