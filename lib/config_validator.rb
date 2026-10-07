@@ -261,6 +261,31 @@ module ConfigValidator
       end
     end
 
+    # Handle conditional schema groups
+    schema.all_definitions.each do |name, rules|
+      if rules[:required_if_schema]
+        dep_field = rules[:required_if].to_s
+        dep_value = rules[:required_if_value]
+        current_dep_val = validated_data[dep_field]
+
+        is_active = if dep_value.nil?
+          current_dep_val && !BOOLEAN_TYPES.any? { |t| current_dep_val.is_a?(t) } || current_dep_val == true
+        else
+          current_dep_val == dep_value
+        end
+
+        if is_active
+          cond_schema = rules[:required_if_schema]
+          cond_result = validate(validated_data, cond_schema, strict: strict)
+          unless cond_result[:valid]
+            errors.concat(cond_result[:errors])
+          end
+          # Merge the processed conditional data back in
+          validated_data.merge!(cond_result[:data])
+        end
+      end
+    end
+
     { valid: errors.empty?, errors: errors, data: validated_data }
   end
 
