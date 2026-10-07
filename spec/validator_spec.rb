@@ -788,4 +788,20 @@ RSpec.describe ConfigValidator do
     expect(result[:valid]).to be true
     expect(result[:data]['tags'][1]).to eq('unknown')
   end
+
+  it 'detects forbidden fields' do
+    forbidden_schema = ConfigValidator::Schema.new do
+      field :deprecated_key, String, forbidden: true
+      field :active_key, String
+    end
+
+    # Valid: forbidden key is absent
+    expect(ConfigValidator.validate({ 'active_key' => 'val' }, forbidden_schema)[:valid]).to be true
+
+    # Invalid: forbidden key is present
+    result = ConfigValidator.validate({ 'active_key' => 'val', 'deprecated_key' => 'old' }, forbidden_schema)
+    expect(result[:valid]).to be false
+    expect(result[:errors].first.path).to eq('deprecated_key')
+    expect(result[:errors].first.expected).to eq('Forbidden')
+  end
 end

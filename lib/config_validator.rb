@@ -57,6 +57,11 @@ module ConfigValidator
 
       next if value.nil? && rules[:allow_nil]
 
+      if rules[:forbidden] && exists
+        errors << ValidationError.new(name, 'Forbidden', value)
+        next
+      end
+
       type_error = nil
       type_msg = rules[:type_message]
 
