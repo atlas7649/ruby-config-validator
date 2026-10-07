@@ -269,4 +269,9 @@ module ConfigValidator
            end
     validate(data, schema, strict: strict)
   end
+
+  def self.format_errors(errors)
+    return "No errors found." if errors.empty?
+    errors.map { |e| e.is_a?(ValidationError) ? e.message : e.to_s }.join("\n")
+  end
 end

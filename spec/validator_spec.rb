@@ -766,4 +766,15 @@ RSpec.describe ConfigValidator do
     expect(result_invalid[:valid]).to be false
     expect(result_invalid[:errors].first.path).to eq('cluster_id')
   end
+
+  it 'formats errors correctly' do
+    config = { 'port' => 'invalid' }
+    result = ConfigValidator.validate(config, schema)
+    errors_text = ConfigValidator.format_errors(result[:errors])
+    expect(errors_text).to include("Invalid value at 'port'")
+  end
+
+  it 'returns no errors message when empty' do
+    expect(ConfigValidator.format_errors([])).to eq('No errors found.')
+  end
 end
