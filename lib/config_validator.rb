@@ -279,7 +279,7 @@ module ConfigValidator
 
     # Handle conditional schema groups
     schema.all_definitions.each do |name, rules|
-      if rules[:required_if_schema]
+      if rules[:required_if_schema] || rules[:optional_if_schema]
         dep_field = rules[:required_if].to_s
         dep_value = rules[:required_if_value]
         current_dep_val = validated_data[dep_field]
@@ -291,7 +291,7 @@ module ConfigValidator
         end
 
         if is_active
-          cond_schema = rules[:required_if_schema]
+          cond_schema = rules[:required_if_schema] || rules[:optional_if_schema]
           cond_result = validate(validated_data, cond_schema, strict: strict)
           unless cond_result[:valid]
             errors.concat(cond_result[:errors])
