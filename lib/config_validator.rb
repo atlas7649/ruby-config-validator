@@ -241,6 +241,12 @@ module ConfigValidator
           end
         end
 
+        if rules[:constraint] && rules[:constraint].respond_to?(:call)
+          unless rules[:constraint].call(value)
+            errors << ValidationError.new(name, "Constraint validation failed", value)
+          end
+        end
+
         if rules[:validate]
           begin
             validation_result = rules[:validate].arity == 2 ? rules[:validate].call(value, validated_data) : rules[:validate].call(value)
