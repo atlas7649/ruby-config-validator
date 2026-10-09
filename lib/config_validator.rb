@@ -240,6 +240,12 @@ module ConfigValidator
           end
         end
 
+        if rules[:unique_values] && value.is_a?(Array)
+          if value.uniq.length != value.length
+            errors << ValidationError.new(name, "Unique values", value)
+          end
+        end
+
         if rules[:pattern] && value.is_a?(String)
           unless value.match?(rules[:pattern])
             errors << ValidationError.new(name, "Pattern #{rules[:pattern].inspect}", value)
