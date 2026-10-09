@@ -170,8 +170,9 @@ module ConfigValidator
       else
         if rules[:non_nil] && value.nil?
           errors << ValidationError.new(name, 'Cannot be nil', value)
-        elsif rules[:allowed_values] && !rules[:allowed_values].include?(value)
-          errors << ValidationError.new(name, "One of #{rules[:allowed_values].inspect}", value)
+        elsif (rules[:allowed_values] || rules[:enum]) && !(rules[:allowed_values] || rules[:enum]).include?(value)
+          allowed = rules[:allowed_values] || rules[:enum]
+          errors << ValidationError.new(name, "One of #{allowed.inspect}", value)
         end
 
         if rules[:exclusive_with] && !value.nil?
