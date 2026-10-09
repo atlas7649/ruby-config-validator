@@ -281,6 +281,22 @@ module ConfigValidator
           end
         end
 
+        if rules[:min_between] && value.is_a?(Numeric)
+          dep_field = rules[:min_between].to_s
+          dep_val = validated_data[dep_field]
+          if dep_val.is_a?(Numeric) && value < dep_val
+            errors << ValidationError.new(name, "Must be at least #{dep_field} (#{dep_val})", value)
+          end
+        end
+
+        if rules[:max_between] && value.is_a?(Numeric)
+          dep_field = rules[:max_between].to_s
+          dep_val = validated_data[dep_field]
+          if dep_val.is_a?(Numeric) && value > dep_val
+            errors << ValidationError.new(name, "Must be at most #{dep_field} (#{dep_val})", value)
+          end
+        end
+
         if rules[:validate]
           begin
             validation_result = if rules[:validate].arity == 2
