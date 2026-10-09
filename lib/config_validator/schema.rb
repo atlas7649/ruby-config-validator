@@ -8,6 +8,25 @@ module ConfigValidator
       instance_eval(&block) if block_given?
     end
 
+    def group(name, options = {}, &block)
+      # Groups allow applying the same options to multiple fields
+      # Note: This is a convenience wrapper around #field
+      group_schema = ConfigValidator::Schema.new do
+        instance_eval(&block)
+      end
+      
+      group_schema.all_definitions.each do |field_name, rules|
+        # Merge group options into field rules
+        merged_rules = options.merge(rules)
+        
+        # We use a private helper or manually call field logic here
+        # Since field is public, we can use it, but we need to avoid
+        # double-applying logic. For simplicity, we just inject into definitions.
+        # However, to keep it consistent with the field method's logic:
+        apply_field_definition("#{name}.#{field_name}", merged_rules)
+      end
+    end
+
     def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, element_type_message: nil, allowed_values: nil, enum: nil, min: nil, max: nil, precision: nil, pattern: nil, regex_match: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, unique_values: false, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, non_nil: false, type_message: nil, exclusive_with: nil, element_min: nil, element_max: nil, strict_types: false, element_default: nil, forbidden: false, min_message: nil, max_message: nil, min_length_message: nil, max_length_message: nil, min_elements_message: nil, max_elements_message: nil, constraint: nil, required_if_schema: nil, optional_if_schema: nil, depends_on: nil, depends_on_value: nil, type_cast: nil, min_between: nil, max_between: nil, email: false, ip_address: false, &block)
       
       actual_schema = schema
@@ -25,7 +44,7 @@ module ConfigValidator
         pattern = /\A(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\z/
       end
 
-      @definitions[name.to_s] = {
+      rules = {
         type: type,
         required: required,
         default: default,
@@ -77,6 +96,8 @@ module ConfigValidator
         max_between: max_between,
         validate: (type == ConfigValidator::Schema && block_given?) ? nil : block
       }
+
+      apply_field_definition(name.to_s, rules)
     end
 
     def fields
@@ -106,6 +127,12 @@ module ConfigValidator
         end
         hash[name] = processed_rules
       end
+    end
+
+    private
+
+    def apply_field_definition(name, rules)
+      @definitions[name] = rules
     end
   end
 end
