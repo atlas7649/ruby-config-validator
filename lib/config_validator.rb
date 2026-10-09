@@ -265,7 +265,18 @@ module ConfigValidator
 
         if rules[:validate]
           begin
-            validation_result = rules[:validate].arity == 2 ? rules[:validate].call(value, validated_data) : rules[:validate].call(value)
+            validation_result = if rules[:validate].arity == 2
+                                  rules[:validate].call(value, validated_data)
+                                elsif rules[:validate].arity == 1
+                                  rules[:validate].call(value)
+                                else
+                                  begin
+                                    rules[:validate].call(value, validated_data)
+                                  rescue ArgumentError
+                                    rules[:validate].call(value)
+                                  end
+                                end
+
             unless validation_result == true
               msg = validation_result.is_a?(String) ? validation_result : 'Custom Validation'
               errors << ValidationError.new(name, msg, value)
@@ -277,7 +288,6 @@ module ConfigValidator
       end
     end
 
-    # Handle conditional schema groups
     schema.all_definitions.each do |name, rules|
       if rules[:required_if_schema] || rules[:optional_if_schema]
         dep_field = rules[:required_if].to_s
@@ -296,7 +306,6 @@ module ConfigValidator
           unless cond_result[:valid]
             errors.concat(cond_result[:errors])
           end
-          # Merge the processed conditional data back in
           validated_data.merge!(cond_result[:data])
         end
       end
