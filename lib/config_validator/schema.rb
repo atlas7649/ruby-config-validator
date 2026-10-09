@@ -8,13 +8,21 @@ module ConfigValidator
       instance_eval(&block) if block_given?
     end
 
-    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, element_type_message: nil, allowed_values: nil, min: nil, max: nil, precision: nil, pattern: nil, regex_match: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, non_nil: false, type_message: nil, exclusive_with: nil, element_min: nil, element_max: nil, strict_types: false, element_default: nil, forbidden: false, min_message: nil, max_message: nil, min_length_message: nil, max_length_message: nil, min_elements_message: nil, max_elements_message: nil, constraint: nil, required_if_schema: nil, optional_if_schema: nil, depends_on: nil, depends_on_value: nil, type_cast: nil, min_between: nil, max_between: nil, &block)
+    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, element_type_message: nil, allowed_values: nil, min: nil, max: nil, precision: nil, pattern: nil, regex_match: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, non_nil: false, type_message: nil, exclusive_with: nil, element_min: nil, element_max: nil, strict_types: false, element_default: nil, forbidden: false, min_message: nil, max_message: nil, min_length_message: nil, max_length_message: nil, min_elements_message: nil, max_elements_message: nil, constraint: nil, required_if_schema: nil, optional_if_schema: nil, depends_on: nil, depends_on_value: nil, type_cast: nil, min_between: nil, max_between: nil, email: false, ip_address: false, &block)
       
       actual_schema = schema
       if block_given? && type == ConfigValidator::Schema
         actual_schema = ConfigValidator::Schema.new do
           instance_eval(&block)
         end
+      end
+
+      # Apply built-in patterns
+      if email
+        pattern = /\A[\w+\-.]+@[\a-zA-Z0-9\-.]+\.[a-zA-Z]{2,}\z/
+      end
+      if ip_address
+        pattern = /\A(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\z/
       end
 
       @definitions[name.to_s] = {
