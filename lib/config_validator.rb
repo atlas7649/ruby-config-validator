@@ -62,6 +62,17 @@ module ConfigValidator
         next
       end
 
+      # Type Casting
+      if rules[:type_cast] && !value.nil?
+        begin
+          value = rules[:type_cast].call(value)
+          validated_data[name] = value
+        rescue StandardError => e
+          errors << ValidationError.new(name, "Type cast failed: #{e.message}", value)
+          next
+        end
+      end
+
       type_error = nil
       type_msg = rules[:type_message]
 
