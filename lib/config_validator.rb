@@ -12,7 +12,8 @@ module ConfigValidator
 
   def self.validate(config_data, schema, strict: false)
     errors = []
-    validated_data = config_data ? config_data.dup : {}
+    # Ensure config_data is a hash to avoid errors on nil input
+    validated_data = config_data.is_a?(Hash) ? config_data.dup : {}
 
     if strict && config_data.is_a?(Hash)
       unknown_keys = config_data.keys - schema.all_definitions.keys
