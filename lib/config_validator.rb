@@ -246,6 +246,13 @@ module ConfigValidator
           end
         end
 
+        if rules[:regex_match] && value.is_a?(String)
+          regex = rules[:regex_match].is_a?(Regexp) ? rules[:regex_match] : Regexp.new(rules[:regex_match])
+          unless value.match?(regex)
+            errors << ValidationError.new(name, "Does not match regex #{regex.inspect}", value)
+          end
+        end
+
         if rules[:non_empty] && value.is_a?(String)
           if value.strip.empty?
             errors << ValidationError.new(name, 'Non-empty string', value)
