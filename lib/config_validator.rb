@@ -212,6 +212,13 @@ module ConfigValidator
           end
         end
 
+        if rules[:forbidden_range] && value.is_a?(Numeric)
+          range = rules[:forbidden_range]
+          if range.is_a?(Range) && range.cover?(value)
+            errors << ValidationError.new(name, "Value is in forbidden range #{range}", value)
+          end
+        end
+
         if rules[:precision] && value.is_a?(Float)
           decimal_part = value.to_s.split('.').last
           if decimal_part && decimal_part.length > rules[:precision]
