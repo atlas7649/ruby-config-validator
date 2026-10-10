@@ -63,6 +63,23 @@ module ConfigValidator
         next
       end
 
+      if rules[:forbidden_if]
+        dep_field = rules[:forbidden_if].to_s
+        dep_value = rules[:forbidden_if_value]
+        current_dep_val = validated_data[dep_field]
+        
+        is_forbidden = if dep_value.nil?
+          current_dep_val && !BOOLEAN_TYPES.any? { |t| current_dep_val.is_a?(t) } || current_dep_val == true
+        else
+          current_dep_val == dep_value
+        end
+
+        if is_forbidden
+          errors << ValidationError.new(name, "Forbidden when #{dep_field} is #{dep_value || 'truthy'}", value)
+          next
+        end
+      end
+
       # Type Casting
       if rules[:type_cast] && !value.nil?
         begin
@@ -173,6 +190,10 @@ module ConfigValidator
         elsif (rules[:allowed_values] || rules[:enum]) && !(rules[:allowed_values] || rules[:enum]).include?(value)
           allowed = rules[:allowed_values] || rules[:enum]
           errors << ValidationError.new(name, "One of #{allowed.inspect}", value)
+        end
+
+        if rules[:whitelist] && !rules[:whitelist].include?(value)
+          errors << ValidationError.new(name, "Must be one of #{rules[:whitelist].inspect}", value)
         end
 
         if rules[:exclusive_with] && !value.nil?
