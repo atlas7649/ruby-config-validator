@@ -1,11 +1,16 @@
 module ConfigValidator
   class Schema
-    attr_reader :definitions
+    attr_reader :definitions, :cross_validators
 
     def initialize(definitions = nil, parent = nil, &block)
       @definitions = definitions || {}
+      @cross_validators = []
       @parent = parent
       instance_eval(&block) if block_given?
+    end
+
+    def cross_validate(&block)
+      @cross_validators << block
     end
 
     def group(name, options = {}, &block)

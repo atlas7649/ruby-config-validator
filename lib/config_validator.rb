@@ -374,6 +374,20 @@ module ConfigValidator
       end
     end
 
+    # Cross-field validation
+    schema.cross_validators.each do |validator|
+      begin
+        result = validator.call(validated_data)
+        unless result == true
+          msg = result.is_a?(String) ? result : 'Cross-field validation failed'
+          # For cross-field errors, we use 'schema' as the path since it applies to the whole set
+          errors << ValidationError.new('schema', msg, validated_data)
+        end
+      rescue StandardError => e
+        errors << ValidationError.new('schema', "Cross-validation Exception: #{e.message}", validated_data)
+      end
+    end
+
     { valid: errors.empty?, errors: errors, data: validated_data }
   end
 
