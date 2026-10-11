@@ -41,6 +41,13 @@ module ConfigValidator
           end
         end
 
+        if rules[:required_any]
+          dep_fields = Array(rules[:required_any]).map(&:to_s)
+          if dep_fields.any? { |f| validated_data.key?(f) }
+            is_required = true
+          end
+        end
+
         if is_required && rules[:default].nil?
           msg = rules[:required_message] || 'Required'
           errors << ValidationError.new(name, msg, 'nil')
