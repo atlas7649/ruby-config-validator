@@ -296,6 +296,12 @@ module ConfigValidator
           end
         end
 
+        if rules[:exact_elements] && value.is_a?(Array)
+          if value.length != rules[:exact_elements]
+            errors << ValidationError.new(name, "Exactly #{rules[:exact_elements]} elements", value.length)
+          end
+        end
+
         if rules[:unique_elements] && value.is_a?(Array)
           unique_field = rules[:unique_elements]
           seen = {}

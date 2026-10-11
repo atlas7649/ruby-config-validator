@@ -24,7 +24,7 @@ module ConfigValidator
         # Merge group options into field rules
         merged_rules = options.merge(rules)
         
-        # We use a private helper or manually call field logic here
+        # We use a private helper or manually으로 field logic here
         # Since field is public, we can use it, but we need to avoid
         # double-applying logic. For simplicity, we just inject into definitions.
         # However, to keep it consistent with the field method's logic:
@@ -32,7 +32,7 @@ module ConfigValidator
       end
     end
 
-    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, element_type_message: nil, allowed_values: nil, enum: nil, min: nil, max: nil, precision: nil, pattern: nil, regex_match: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, non_empty: false, description: nil, unique_elements: nil, unique_values: false, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, non_nil: false, type_message: nil, exclusive_with: nil, element_min: nil, element_max: nil, strict_types: false, element_default: nil, forbidden: false, min_message: nil, max_message: nil, min_length_message: nil, max_length_message: nil, min_elements_message: nil, max_elements_message: nil, constraint: nil, required_if_schema: nil, optional_if_schema: nil, depends_on: nil, depends_on_value: nil, type_cast: nil, min_between: nil, max_between: nil, email: false, ip_address: false, whitelist: nil, forbidden_if: nil, forbidden_if_value: nil, forbidden_range: nil, required_any: nil, required_if_any: nil, required_if_any_value: nil, forbidden_if_any: nil, forbidden_if_any_value: nil, &block)
+    def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, element_type_message: nil, allowed_values: nil, enum: nil, min: nil, max: nil, precision: nil, pattern: nil, regex_match: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, exact_elements: nil, non_empty: false, description: nil, unique_elements: nil, unique_values: false, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, non_nil: false, type_message: nil, exclusive_with: nil, element_min: nil, element_max: nil, strict_types: false, element_default: nil, forbidden: false, min_message: nil, max_message: nil, min_length_message: nil, max_length_message: nil, min_elements_message: nil, max_elements_message: nil, constraint: nil, required_if_schema: nil, optional_if_schema: nil, depends_on: nil, depends_on_value: nil, type_cast: nil, min_between: nil, max_between: nil, email: false, ip_address: false, whitelist: nil, forbidden_if: nil, forbidden_if_value: nil, forbidden_range: nil, required_any: nil, required_if_any: nil, required_if_any_value: nil, forbidden_if_any: nil, forbidden_if_any_value: nil, &block)
       
       actual_schema = schema
       if block_given? && type == ConfigValidator::Schema
@@ -69,6 +69,7 @@ module ConfigValidator
         max_length: max_length,
         min_elements: min_elements,
         max_elements: max_elements,
+        exact_elements: exact_elements,
         non_empty: non_empty,
         description: description,
         unique_elements: unique_elements,
