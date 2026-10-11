@@ -41,6 +41,20 @@ module ConfigValidator
           end
         end
 
+        if rules[:required_if_any]
+          dep_fields = Array(rules[:required_if_any]).map(&:to_s)
+          dep_value = rules[:required_if_any_value]
+          
+          is_required = dep_fields.any? do |f|
+            val = validated_data[f]
+            if dep_value.nil?
+              val && !BOOLEAN_TYPES.any? { |t| val.is_a?(t) } || val == true
+            else
+              val == dep_value
+            end
+          end
+        end
+
         if rules[:required_any]
           dep_fields = Array(rules[:required_any]).map(&:to_s)
           if dep_fields.any? { |f| validated_data.key?(f) }
@@ -83,6 +97,25 @@ module ConfigValidator
 
         if is_forbidden
           errors << ValidationError.new(name, "Forbidden when #{dep_field} is #{dep_value || 'truthy'}", value)
+          next
+        end
+      end
+
+      if rules[:forbidden_if_any]
+        dep_fields = Array(rules[:forbidden_if_any]).map(&:to_s)
+        dep_value = rules[:forbidden_if_any_value]
+
+        is_forbidden = dep_fields.any? do |f|
+          val = validated_data[f]
+          if dep_value.nil?
+            val && !BOOLEAN_TYPES.any? { |t| val.is_a?(t) } || val == true
+          else
+            val == dep_value
+          end
+        end
+
+        if is_forbidden
+          errors << ValidationError.new(name, "Forbidden when any of #{dep_fields.join(', ')} is #{dep_value || 'truthy'}", value)
           next
         end
       end
