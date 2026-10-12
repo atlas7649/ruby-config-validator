@@ -15,20 +15,19 @@ module ConfigValidator
 
     def group(name, options = {}, &block)
       # Groups allow applying the same options to multiple fields
-      # Note: This is a convenience wrapper around #field
+      # We create a temporary schema to capture the fields defined in the block
       group_schema = ConfigValidator::Schema.new do
         instance_eval(&block)
       end
       
-      group_schema.all_definitions.each do |field_name, rules|
+      group_schema.definitions.each do |field_name, rules|
         # Merge group options into field rules
         merged_rules = options.merge(rules)
         
-        # We use a private helper or manually으로 field logic here
-        # Since field is public, we can use it, but we need to avoid
-        # double-applying logic. For simplicity, we just inject into definitions.
-        # However, to keep it consistent with the field method's logic:
-        apply_field_definition("#{name}.#{field_name}", merged_rules)
+        # By default, we prefix the field name with the group name to avoid collisions
+        # and maintain the logical hierarchy of the group
+        full_name = "#{name}.#{field_name}"
+        apply_field_definition(full_name, merged_rules)
       end
     end
 
