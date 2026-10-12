@@ -73,14 +73,14 @@ module ConfigValidator
           value = rules[:default]
         end
       elsif value.nil? && !rules[:allow_nil]
-        errors << ValidationError.new(name, 'Cannot be nil', value)
+        errors << ValidationError.new(name, rules[:nil_message] || 'Cannot be nil', value)
         next
       end
 
       next if value.nil? && rules[:allow_nil]
 
       if rules[:forbidden] && exists
-        errors << ValidationError.new(name, 'Forbidden', value)
+        errors << ValidationError.new(name, rules[:forbidden_message] || 'Forbidden', value)
         next
       end
 
@@ -96,7 +96,8 @@ module ConfigValidator
         end
 
         if is_forbidden
-          errors << ValidationError.new(name, "Forbidden when #{dep_field} is #{dep_value || 'truthy'}", value)
+          msg = rules[:forbidden_if_message] || "Forbidden when #{dep_field} is #{dep_value || 'truthy'}"
+          errors << ValidationError.new(name, msg, value)
           next
         end
       end
@@ -115,7 +116,8 @@ module ConfigValidator
         end
 
         if is_forbidden
-          errors << ValidationError.new(name, "Forbidden when any of #{dep_fields.join(', ')} is #{dep_value || 'truthy'}", value)
+          msg = rules[:forbidden_if_any_message] || "Forbidden when any of #{dep_fields.join(', ')} is #{dep_value || 'truthy'}"
+          errors << ValidationError.new(name, msg, value)
           next
         end
       end
@@ -193,15 +195,15 @@ module ConfigValidator
             end
 
             if rules[:element_allowed_values] && !rules[:element_allowed_values].include?(item)
-              errors << ValidationError.new("#{name}[#{idx}]", "One of #{rules[:element_allowed_values].inspect}", item)
+              errors << ValidationError.new("#{name}[#{idx}]", rules[:element_allowed_values_message] || "One of #{rules[:element_allowed_values].inspect}", item)
             end
 
             if item.is_a?(Numeric)
               if rules[:element_min] && item < rules[:element_min]
-                errors << ValidationError.new("#{name}[#{idx}]", "Minimum element value #{rules[:element_min]}", item)
+                errors << ValidationError.new("#{name}[#{idx}]", rules[:element_min_message] || "Minimum element value #{rules[:element_min]}", item)
               end
               if rules[:element_max] && item > rules[:element_max]
-                errors << ValidationError.new("#{name}[#{idx}]", "Maximum element value #{rules[:element_max]}", item)
+                errors << ValidationError.new("#{name}[#{idx}]", rules[:element_max_message] || "Maximum element value #{rules[:element_max]}", item)
               end
             end
           end
@@ -226,20 +228,23 @@ module ConfigValidator
         errors << type_error
       else
         if rules[:non_nil] && value.nil?
-          errors << ValidationError.new(name, 'Cannot be nil', value)
+          errors << ValidationError.new(name, rules[:non_nil_message] || 'Cannot be nil', value)
         elsif (rules[:allowed_values] || rules[:enum]) && !(rules[:allowed_values] || rules[:enum]).include?(value)
           allowed = rules[:allowed_values] || rules[:enum]
-          errors << ValidationError.new(name, "One of #{allowed.inspect}", value)
+          msg = rules[:allowed_values_message] || "One of #{allowed.inspect}"
+          errors << ValidationError.new(name, msg, value)
         end
 
         if rules[:whitelist] && !rules[:whitelist].include?(value)
-          errors << ValidationError.new(name, "Must be one of #{rules[:whitelist].inspect}", value)
+          msg = rules[:whitelist_message] || "Must be one of #{rules[:whitelist].inspect}"
+          errors << ValidationError.new(name, msg, value)
         end
 
         if rules[:exclusive_with] && !value.nil?
           exclusive_field = rules[:exclusive_with].to_s
           if !validated_data[exclusive_field].nil?
-            errors << ValidationError.new(name, "Mutually exclusive with #{exclusive_field}", value)
+            msg = rules[:exclusive_with_message] || "Mutually exclusive with #{exclusive_field}"
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
@@ -255,14 +260,16 @@ module ConfigValidator
         if rules[:forbidden_range] && value.is_a?(Numeric)
           range = rules[:forbidden_range]
           if range.is_a?(Range) && range.cover?(value)
-            errors << ValidationError.new(name, "Value is in forbidden range #{range}", value)
+            msg = rules[:forbidden_range_message] || "Value is in forbidden range #{range}"
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
         if rules[:precision] && value.is_a?(Float)
           decimal_part = value.to_s.split('.').last
           if decimal_part && decimal_part.length > rules[:precision]
-            errors << ValidationError.new(name, "Maximum precision #{rules[:precision]}", decimal_part.length)
+            msg = rules[:precision_message] || "Maximum precision #{rules[:precision]}"
+            errors << ValidationError.new(name, msg, decimal_part.length)
           end
         end
 
@@ -298,7 +305,8 @@ module ConfigValidator
 
         if rules[:exact_elements] && value.is_a?(Array)
           if value.length != rules[:exact_elements]
-            errors << ValidationError.new(name, "Exactly #{rules[:exact_elements]} elements", value.length)
+            msg = rules[:exact_elements_message] || "Exactly #{rules[:exact_elements]} elements"
+            errors << ValidationError.new(name, msg, value.length)
           end
         end
 
@@ -309,7 +317,8 @@ module ConfigValidator
             next unless item.is_a?(Hash)
             val = item[unique_field.to_s]
             if seen.key?(val)
-              errors << ValidationError.new("#{name}[#{idx}].#{unique_field}", "Unique value", val)
+              msg = rules[:unique_elements_message] || "Unique value"
+              errors << ValidationError.new("#{name}[#{idx}].#{unique_field}", msg, val)
             else
               seen[val] = true
             end
@@ -318,32 +327,37 @@ module ConfigValidator
 
         if rules[:unique_values] && value.is_a?(Array)
           if value.uniq.length != value.length
-            errors << ValidationError.new(name, "Unique values", value)
+            msg = rules[:unique_values_message] || "Unique values"
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
         if rules[:pattern] && value.is_a?(String)
           unless value.match?(rules[:pattern])
-            errors << ValidationError.new(name, "Pattern #{rules[:pattern].inspect}", value)
+            msg = rules[:pattern_message] || "Pattern #{rules[:pattern].inspect}"
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
         if rules[:regex_match] && value.is_a?(String)
           regex = rules[:regex_match].is_a?(Regexp) ? rules[:regex_match] : Regexp.new(rules[:regex_match])
           unless value.match?(regex)
-            errors << ValidationError.new(name, "Does not match regex #{regex.inspect}", value)
+            msg = rules[:regex_match_message] || "Does not match regex #{regex.inspect}"
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
         if rules[:non_empty] && value.is_a?(String)
           if value.strip.empty?
-            errors << ValidationError.new(name, 'Non-empty string', value)
+            msg = rules[:non_empty_message] || 'Non-empty string'
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
         if rules[:constraint] && rules[:constraint].respond_to?(:call)
           unless rules[:constraint].call(value)
-            errors << ValidationError.new(name, "Constraint validation failed", value)
+            msg = rules[:constraint_message] || "Constraint validation failed"
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
@@ -359,7 +373,8 @@ module ConfigValidator
           end
 
           unless is_dep_met
-            errors << ValidationError.new(name, "Depends on #{dep_field} being #{dep_value || 'truthy'}", value)
+            msg = rules[:depends_on_message] || "Depends on #{dep_field} being #{dep_value || 'truthy'}"
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
@@ -367,7 +382,8 @@ module ConfigValidator
           dep_field = rules[:min_between].to_s
           dep_val = validated_data[dep_field]
           if dep_val.is_a?(Numeric) && value < dep_val
-            errors << ValidationError.new(name, "Must be at least #{dep_field} (#{dep_val})", value)
+            msg = rules[:min_between_message] || "Must be at least #{dep_field} (#{dep_val})"
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
@@ -375,7 +391,8 @@ module ConfigValidator
           dep_field = rules[:max_between].to_s
           dep_val = validated_data[dep_field]
           if dep_val.is_a?(Numeric) && value > dep_val
-            errors << ValidationError.new(name, "Must be at most #{dep_field} (#{dep_val})", value)
+            msg = rules[:max_between_message] || "Must be at most #{dep_field} (#{dep_val})"
+            errors << ValidationError.new(name, msg, value)
           end
         end
 
