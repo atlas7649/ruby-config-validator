@@ -70,6 +70,20 @@ module ConfigValidator
           end
         end
 
+        if rules[:required_if_all]
+          dep_fields = Array(rules[:required_if_all]).map(&:to_s)
+          dep_value = rules[:required_if_all_value]
+
+          is_required = dep_fields.any? && dep_fields.all? do |f|
+            val = validated_data[f]
+            if dep_value.nil?
+              val && !BOOLEAN_TYPES.any? { |t| val.is_a?(t) } || val == true
+            else
+              val == dep_value
+            end
+          end
+        end
+
         if is_required && rules[:default].nil?
           msg = rules[:required_message] || 'Required'
           errors << ValidationError.new(name, msg, 'nil')
