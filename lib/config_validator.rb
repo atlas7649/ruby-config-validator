@@ -141,10 +141,26 @@ module ConfigValidator
         end
       end
 
+      # Determine the type to validate against
+      active_type = rules[:type]
+      if rules[:type_if]
+        dep_field = rules[:type_if].to_s
+        dep_value = rules[:type_if_value]
+        current_dep_val = validated_data[dep_field]
+        
+        is_matched = if dep_value.nil?
+          current_dep_val && !BOOLEAN_TYPES.any? { |t| current_dep_val.is_a?(t) } || current_dep_val == true
+        else
+          current_dep_val == dep_value
+        end
+        
+        active_type = rules[:type_if_type] if is_matched
+      end
+
       type_error = nil
       type_msg = rules[:type_message]
 
-      if rules[:type] == ConfigValidator::Schema
+      if active_type == ConfigValidator::Schema
         if value.is_a?(Hash)
           nested_schema = rules[:schema] || ConfigValidator::Schema.new {}
           nested_result = validate(value, nested_schema, strict: strict)
@@ -158,7 +174,7 @@ module ConfigValidator
         else
           type_error = ValidationError.new(name, type_msg || 'Hash (Nested Schema)', value)
         end
-      elsif rules[:type] == Array
+      elsif active_type == Array
         if !value.is_a?(Array)
           type_error = ValidationError.new(name, type_msg || 'Array', value)
         elsif rules[:element_type]
@@ -216,20 +232,20 @@ module ConfigValidator
             end
           end
         end
-      elsif rules[:type].is_a?(Array)
-        unless check_type(value, rules[:type])
-          type_error = ValidationError.new(name, type_msg || "One of #{rules[:type].inspect}", value)
+      elsif active_type.is_a?(Array)
+        unless check_type(value, active_type)
+          type_error = ValidationError.new(name, type_msg || "One of #{active_type.inspect}", value)
         end
-      elsif rules[:type] == :boolean
+      elsif active_type == :boolean
         unless BOOLEAN_TYPES.any? { |t| value.is_a?(t) }
           type_error = ValidationError.new(name, type_msg || 'Boolean', value)
         end
-      elsif rules[:type].respond_to?(:call)
-        unless rules[:type].call(value)
+      elsif active_type.respond_to?(:call)
+        unless active_type.call(value)
           type_error = ValidationError.new(name, type_msg || "Custom Type", value)
         end
-      elsif !value.is_a?(rules[:type])
-        type_error = ValidationError.new(name, type_msg || rules[:type], value)
+      elsif !value.is_a?(active_type)
+        type_error = ValidationError.new(name, type_msg || active_type, value)
       end
 
       if type_error
