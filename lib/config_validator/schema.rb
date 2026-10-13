@@ -13,6 +13,21 @@ module ConfigValidator
       @cross_validators << block
     end
 
+    def rule(name = nil, &block)
+      # Custom rule that can be registered and called during cross-validation
+      # If a name is provided, it helps in error reporting
+      validator = block
+      @cross_validators << lambda do |data|
+        result = validator.call(data)
+        unless result == true
+          msg = result.is_a?(String) ? result : "Rule '#{name || 'custom'}' validation failed"
+          # We return a special structure that the main validator can use to assign a path
+          { path: name ? "schema.#{name}" : 'schema', message: msg }
+        end
+        result == true
+      end
+    end
+
     def group(name, options = {}, &block)
       # Groups allow applying the same options to multiple fields
       # We create a temporary schema to capture the fields defined in the block
