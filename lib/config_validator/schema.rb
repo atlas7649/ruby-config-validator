@@ -52,6 +52,17 @@ module ConfigValidator
       end
     end
 
+    def required_one_of(*names, message: nil)
+      @cross_validators << lambda do |data|
+        if names.none? { |name| data.key?(name.to_s) }
+          msg = message || "At least one of #{names.join(', ')} must be provided"
+          { path: 'schema', message: msg }
+        else
+          true
+        end
+      end
+    end
+
     def range(name, min: nil, max: nil, required: true, type: Integer, **extra)
       field(name, type, required: required, min: min, max: max, **extra)
     end
