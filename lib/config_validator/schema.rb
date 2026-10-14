@@ -82,6 +82,19 @@ module ConfigValidator
       field(name, Array, required: required, element_type: type, unique_values: true, **extra)
     end
 
+    def required_if_schema(field, value: nil, &block)
+      # Creates a schema that is validated if 'field' equals 'value'
+      schema = ConfigValidator::Schema.new do
+        instance_eval(&block)
+      end
+      # We use a dummy field name for the definition since the actual validation happens on the whole config
+      # The main validator looks for these special keys in all definitions
+      field("__cond_schema_#{field}", ConfigValidator::Schema, required: false, 
+             required_if_schema: schema, 
+             required_if: field, 
+             required_if_value: value)
+    end
+
     def field(name, type, required: true, default: nil, schema: nil, element_type: nil, element_optional: false, element_allowed_values: nil, element_type_message: nil, allowed_values: nil, enum: nil, min: nil, max: nil, precision: nil, pattern: nil, regex_match: nil, min_length: nil, max_length: nil, min_elements: nil, max_elements: nil, exact_elements: nil, non_empty: false, description: nil, unique_elements: nil, unique_values: false, required_if: nil, required_if_value: nil, required_message: nil, allow_nil: false, non_nil: false, type_message: nil, exclusive_with: nil, element_min: nil, element_max: nil, strict_types: false, element_default: nil, forbidden: false, min_message: nil, max_message: nil, min_length_message: nil, max_length_message: nil, min_elements_message: nil, max_elements_message: nil, constraint: nil, required_if_schema: nil, optional_if_schema: nil, depends_on: nil, depends_on_value: nil, type_cast: nil, min_between: nil, max_between: nil, email: false, ip_address: false, whitelist: nil, forbidden_if: nil, forbidden_if_value: nil, forbidden_range: nil, required_any: nil, required_if_any: nil, required_if_any_value: nil, forbidden_if_any: nil, forbidden_if_any_value: nil, required_all: nil, required_if_all: nil, required_if_all_value: nil, type_if: nil, type_if_value: nil, type_if_type: nil, **extra_options)
       
       actual_schema = schema

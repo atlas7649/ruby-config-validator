@@ -461,8 +461,10 @@ module ConfigValidator
 
     schema.all_definitions.each do |name, rules|
       if rules[:required_if_schema] || rules[:optional_if_schema]
-        dep_field = rules[:required_if].to_s
-        dep_value = rules[:required_if_value]
+        # Use the dependency specified in required_if or required_if_schema's own logic if defined
+        # For compatibility, we check required_if first, then fallback to specific conditional schema keys
+        dep_field = (rules[:required_if] || rules[:required_if_schema_field] || rules[:optional_if_schema_field]).to_s
+        dep_value = rules[:required_if_value] || rules[:required_if_schema_value] || rules[:optional_if_schema_value]
         current_dep_val = validated_data[dep_field]
 
         is_active = if dep_value.nil?
