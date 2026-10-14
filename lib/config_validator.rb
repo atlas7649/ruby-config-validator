@@ -497,7 +497,7 @@ module ConfigValidator
           end
         elsif result != true
           msg = result.is_a?(String) ? result : 'Cross-field validation failed'
-          errors << ValidationError.new('schema', msg, validated_data)
+            errors << ValidationError.new('schema', msg, validated_data)
         end
       rescue StandardError => e
         errors << ValidationError.new('schema', "Cross-validation Exception: #{e.message}", validated_data)
@@ -527,6 +527,10 @@ module ConfigValidator
            else raise "Unsupported file format: #{ext}"
            end
     validate(data, schema, strict: strict)
+  end
+
+  def self.validate_file(file_path, schema, strict: false)
+    load_and_validate(file_path, schema, strict: strict)
   end
 
   def self.format_errors(errors)
