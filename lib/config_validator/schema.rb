@@ -117,6 +117,9 @@ module ConfigValidator
       if extra_options[:ip_address]
         pattern_override = /\A(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\z/
       end
+      if extra_options[:uuid]
+        pattern_override = /\A[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/i
+      end
 
       rules = {
         type: type,
