@@ -53,9 +53,14 @@ module ConfigValidator
     end
 
     def required_one_of(*names, message: nil)
+      required_at_least(1, *names, message: message)
+    end
+
+    def required_at_least(count, *names, message: nil)
       @cross_validators << lambda do |data|
-        if names.none? { |name| data.key?(name.to_s) }
-          msg = message || "At least one of #{names.join(', ')} must be provided"
+        present_count = names.count { |name| data.key?(name.to_s) }
+        if present_count < count
+          msg = message || "At least #{count} of #{names.join(', ')} must be provided"
           { path: 'schema', message: msg }
         else
           true
