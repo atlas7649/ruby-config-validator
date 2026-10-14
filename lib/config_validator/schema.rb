@@ -63,6 +63,17 @@ module ConfigValidator
       end
     end
 
+    def required_none_of(*names, message: nil)
+      @cross_validators << lambda do |data|
+        if names.any? { |name| data.key?(name.to_s) }
+          msg = message || "None of #{names.join(', ')} should be provided together"
+          { path: 'schema', message: msg }
+        else
+          true
+        end
+      end
+    end
+
     def range(name, min: nil, max: nil, required: true, type: Integer, **extra)
       field(name, type, required: required, min: min, max: max, **extra)
     end
@@ -81,11 +92,12 @@ module ConfigValidator
       end
 
       # Apply built-in patterns
+      pattern_override = nil
       if extra_options[:email]
-        pattern = /\A[\w+\-.]+@[\a-zA-Z0-9\-.]+\.[a-zA-Z]{2,}\z/
+        pattern_override = /\A[\w+\-.]+@[\a-zA-Z0-9\-.]+\.[a-zA-Z]{2,}\z/
       end
       if extra_options[:ip_address]
-        pattern = /\A(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\z/
+        pattern_override = /\A(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\z/
       end
 
       rules = {
@@ -102,7 +114,7 @@ module ConfigValidator
         min: min,
         max: max,
         precision: precision,
-        pattern: pattern,
+        pattern: pattern_override || pattern,
         regex_match: regex_match,
         min_length: min_length,
         max_length: max_length,
