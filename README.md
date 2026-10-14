@@ -1,6 +1,6 @@
 # Ruby Config Validator
 
-A simple tool to validate YAML or JSON configuration files against a predefined schema.
+A simple tool to validate YAML or JSON configuration files against a predefined schema with detailed error reporting.
 
 ## Usage
 
@@ -11,6 +11,7 @@ schema = ConfigValidator::Schema.new do
   field :api_key, String
   field :timeout, Integer
   field :retries, Integer, required: false
+  field :webhook_url, String, url: true
 end
 
 result = ConfigValidator.load_and_validate('config.yaml', schema)

@@ -120,6 +120,9 @@ module ConfigValidator
       if extra_options[:uuid]
         pattern_override = /\A[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/i
       end
+      if extra_options[:url]
+        pattern_override = /\A(http|https):\/\/[^\s\/$.?#].[^\s]*\z/i
+      end
 
       rules = {
         type: type,
