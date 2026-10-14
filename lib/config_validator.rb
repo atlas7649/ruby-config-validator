@@ -295,6 +295,13 @@ module ConfigValidator
           end
         end
 
+        if rules[:positive] && value.is_a?(Numeric)
+          if value <= 0
+            msg = rules[:positive_message] || "Must be a positive number"
+            errors << ValidationError.new(name, msg, value)
+          end
+        end
+
         if rules[:forbidden_range] && value.is_a?(Numeric)
           range = rules[:forbidden_range]
           if range.is_a?(Range) && range.cover?(value)
