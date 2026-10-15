@@ -113,14 +113,11 @@ module ConfigValidator
       pattern_override = nil
       if extra_options[:email]
         pattern_override = /\A[\w+\-.]+@[\a-zA-Z0-9\-.]+\.[a-zA-Z]{2,}\z/
-      end
-      if extra_options[:ip_address]
+      elsif extra_options[:ip_address]
         pattern_override = /\A(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\z/
-      end
-      if extra_options[:uuid]
+      elsif extra_options[:uuid]
         pattern_override = /\A[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/i
-      end
-      if extra_options[:url]
+      elsif extra_options[:url]
         pattern_override = /\A(http|https):\/\/[^\s\/$.?#].[^\s]*\z/i
       end
 
