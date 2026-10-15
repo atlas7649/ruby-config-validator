@@ -540,6 +540,10 @@ module ConfigValidator
     load_and_validate(file_path, schema, strict: strict)
   end
 
+  def self.validate_hash(config_hash, schema, strict: false)
+    validate(config_hash, schema, strict: strict)
+  end
+
   def self.format_errors(errors)
     return "No errors found." if errors.empty?
     errors.map { |e| e.is_a?(ValidationError) ? e.message : e.to_s }.join("\n")
