@@ -10,7 +10,7 @@ require 'config_validator'
 schema = ConfigValidator::Schema.new do
   field :api_key, String
   field :timeout, Integer
-  field :retries, Integer, required: false
+  optional :retries, Integer
   field :webhook_url, String, url: true
 end
 
@@ -22,3 +22,12 @@ else
   puts "Errors found: #{result[:errors]}"
 end
 ```
+
+## Features
+
+- **Type Validation**: Supports basic Ruby types, `:boolean`, and custom type procs.
+- **Constraint Helpers**: `range`, `unique_array`, `required_fields` for common patterns.
+- **Conditional Logic**: `required_if`, `forbidden_if`, and complex conditional schemas (`required_if_schema`).
+- **Advanced Checks**: Regular expressions, precision for floats, and custom validation blocks.
+- **Cross-Field Validation**: Validate relationships between multiple fields using `cross_validate`.
+- **Batch Validation**: `validate_all` helper for validating multiple files at once.

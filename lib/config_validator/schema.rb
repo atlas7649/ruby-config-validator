@@ -87,6 +87,10 @@ module ConfigValidator
       field(name, Array, required: required, element_type: type, unique_values: true, **extra)
     end
 
+    def optional(name, type, **extra)
+      field(name, type, required: false, **extra)
+    end
+
     def required_if_schema(field, value: nil, &block)
       # Creates a schema that is validated if 'field' equals 'value'
       schema = ConfigValidator::Schema.new do
