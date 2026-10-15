@@ -544,6 +544,24 @@ module ConfigValidator
     validate(config_hash, schema, strict: strict)
   end
 
+  def self.validate_all(file_paths, schema, strict: false)
+    results = {}
+    all_valid = true
+
+    file_paths.each do |path|
+      begin
+        res = validate_file(path, schema, strict: strict)
+        results[path] = res
+        all_valid = false unless res[:valid]
+      rescue StandardError => e
+        results[path] = { valid: false, errors: [e.message], data: nil }
+        all_valid = false
+      end
+    end
+
+    { valid: all_valid, results: results }
+  end
+
   def self.format_errors(errors)
     return "No errors found." if errors.empty?
     errors.map { |e| e.is_a?(ValidationError) ? e.message : e.to_s }.join("\n")
