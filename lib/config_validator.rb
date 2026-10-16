@@ -441,6 +441,15 @@ module ConfigValidator
           end
         end
 
+        if rules[:excluded_from]
+          excl_field = rules[:excluded_from].to_s
+          excl_val = validated_data[excl_field]
+          if excl_val && (excl_val.is_a?(Array) ? excl_val.include?(value) : excl_val == value)
+            msg = rules[:excluded_from_message] || "Value must be excluded from #{excl_field}"
+            errors << ValidationError.new(name, msg, value)
+          end
+        end
+
         if rules[:validate]
           begin
             validation_result = if rules[:validate].arity == 2
