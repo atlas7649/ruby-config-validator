@@ -8,10 +8,10 @@ A simple tool to validate YAML or JSON configuration files against a predefined 
 require 'config_validator'
 
 schema = ConfigValidator::Schema.new do
-  field :api_key, String
-  field :timeout, Integer
+  mandatory :api_key, String
+  mandatory :timeout, Integer
   optional :retries, Integer
-  field :webhook_url, String, url: true
+  mandatory :webhook_url, String, url: true
 end
 
 result = ConfigValidator.load_and_validate('config.yaml', schema)

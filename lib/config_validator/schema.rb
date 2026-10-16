@@ -99,6 +99,10 @@ module ConfigValidator
       field(name, type, required: false, **extra)
     end
 
+    def mandatory(name, type, **extra)
+      field(name, type, required: true, **extra)
+    end
+
     def any_of(name, types, **extra)
       field(name, types, **extra)
     end
