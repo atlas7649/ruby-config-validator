@@ -79,6 +79,10 @@ module ConfigValidator
       end
     end
 
+    def required_if_all(name, type, fields:, value: nil, **extra)
+      field(name, type, required: false, required_if_all: fields, required_if_all_value: value, **extra)
+    end
+
     def range(name, min: nil, max: nil, required: true, type: Integer, **extra)
       field(name, type, required: required, min: min, max: max, **extra)
     end
