@@ -144,6 +144,26 @@ module ConfigValidator
         end
       end
 
+      if rules[:forbidden_if_all]
+        dep_fields = Array(rules[:forbidden_if_all]).map(&:to_s)
+        dep_value = rules[:forbidden_if_all_value]
+
+        is_forbidden = dep_fields.any? && dep_fields.all? do |f|
+          val = validated_data[f]
+          if dep_value.nil?
+            val && !BOOLEAN_TYPES.any? { |t| val.is_a?(t) } || val == true
+          else
+            val == dep_value
+          end
+        end
+
+        if is_forbidden
+          msg = rules[:forbidden_if_all_message] || "Forbidden when all of #{dep_fields.join(', ')} are #{dep_value || 'truthy'}"
+          errors << ValidationError.new(name, msg, value)
+          next
+        end
+      end
+
       # Type Casting
       if rules[:type_cast] && !value.nil?
         begin
