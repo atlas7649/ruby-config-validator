@@ -87,6 +87,14 @@ module ConfigValidator
       field(name, type, required: false, required_if_any: fields, required_if_any_value: value, **extra)
     end
 
+    def forbidden_if(name, type, field:, value: nil, **extra)
+      field(name, type, forbidden_if: field, forbidden_if_value: value, **extra)
+    end
+
+    def forbidden_if_any(name, type, fields:, value: nil, **extra)
+      field(name, type, forbidden_if_any: fields, forbidden_if_any_value: value, **extra)
+    end
+
     def range(name, min: nil, max: nil, required: true, type: Integer, **extra)
       field(name, type, required: required, min: min, max: max, **extra)
     end
